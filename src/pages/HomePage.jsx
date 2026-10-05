@@ -4,6 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import CompanyCard from '../components/CompanyCard.jsx';
 import CompanyPicker from '../components/CompanyPicker.jsx';
 import DdayBadge from '../components/DdayBadge.jsx';
+import InstallApp from '../components/InstallApp.jsx';
 import JobTimeline from '../components/JobTimeline.jsx';
 import Logo from '../components/Logo.jsx';
 import NewsList from '../components/NewsList.jsx';
@@ -105,6 +106,7 @@ export default function HomePage() {
       <div className="space-y-6">
         {banner}
         <Onboarding />
+        <InstallApp />
       </div>
     );
   }
@@ -200,6 +202,8 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      <InstallApp />
     </div>
   );
 }

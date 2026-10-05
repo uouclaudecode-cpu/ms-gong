@@ -27,3 +27,9 @@ Vite 5 + React 18 + React Router 6 + Tailwind 3 (로컬 Node 18이라 이 버전
 
 ## 실행
 npm run dev / npm run build
+
+## 앱 설치·공유 이미지·통계
+- 홈 화면 설치: `public/manifest.webmanifest`, `public/sw.js`(캐시 안 함, 오프라인 안내만), `src/components/InstallApp.jsx`
+- 아이콘·공유 미리보기(`public/icon-*.png`, `apple-touch-icon.png`, `og.png`)는 `npm run images`(sharp, 맑은 고딕)로 만들고 결과 PNG를 커밋
+- 공유 미리보기 주소는 `index.html`의 `og:url`·`og:image`(현재 `https://ms-gong.vercel.app`). 주소를 바꾸면 같이 바꿈
+- 방문자 통계: `@vercel/analytics` (`src/main.jsx`). Vercel 프로젝트 Analytics 탭에서 켜야 수집됨
