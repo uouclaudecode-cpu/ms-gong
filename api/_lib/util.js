@@ -48,6 +48,3 @@ export function mentions(company, text) {
   return names.some((n) => t.includes(n.replace(/\s/g, '')));
 }
 
-export function parseIds(raw) {
-  return [...new Set(String(raw ?? '').split(','))].filter((id) => COMPANY_BY_ID[id]);
-}

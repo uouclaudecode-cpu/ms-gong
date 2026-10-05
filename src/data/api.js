@@ -24,12 +24,22 @@ export function fetchJobs() {
   return withFallback('/api/jobs', () => MOCK_JOBS);
 }
 
-/** ids: 기업 id 배열. 순서를 정렬해 같은 조합이면 같은 주소 → CDN 캐시를 같이 씁니다 */
-export function fetchNews(ids) {
-  const key = [...ids].sort().join(',');
-  return withFallback(`/api/news?ids=${key}`, () =>
-    MOCK_NEWS.filter((n) => ids.includes(n.companyId)).sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)),
+/**
+ * ids: 기업 id 배열. 기업마다 따로 불러 합칩니다(기업별 주소라 CDN 캐시를 모든 방문자가 같이 씀).
+ * 한 기업이라도 실데이터면 live, 같은 기사가 여러 기업에 걸리면 하나만 남깁니다.
+ */
+export async function fetchNews(ids) {
+  const results = await Promise.all(
+    ids.map((id) => withFallback(`/api/news?id=${id}`, () => MOCK_NEWS.filter((n) => n.companyId === id))),
   );
+  const live = results.find((r) => r.live);
+  const seen = new Set();
+  const items = results
+    .filter((r) => r.live === Boolean(live)) // 실데이터와 예시를 섞지 않습니다
+    .flatMap((r) => r.items)
+    .filter((n) => (seen.has(n.url) ? false : seen.add(n.url)))
+    .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+  return { items, live: Boolean(live), reason: live ? undefined : results[0]?.reason };
 }
 
 export function fetchBlog(companyId, kw) {

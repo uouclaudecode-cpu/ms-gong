@@ -9,8 +9,8 @@ export function hasNaverKey() {
 }
 
 /** type: 'blog' | 'news' */
-export async function naverSearch(type, query, { display = 10, sort = 'sim' } = {}) {
-  const url = `${BASE}/${type}?query=${encodeURIComponent(query)}&display=${display}&sort=${sort}&format=json`;
+export async function naverSearch(type, query, { display = 10, sort = 'sim', start = 1 } = {}) {
+  const url = `${BASE}/${type}?query=${encodeURIComponent(query)}&display=${display}&start=${start}&sort=${sort}&format=json`;
   const r = await fetch(url, {
     headers: {
       'X-NCP-APIGW-API-KEY-ID': process.env.NAVER_CLIENT_ID,
