@@ -20,18 +20,9 @@ export default function CompanyPicker() {
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1">
+        <div className="no-scrollbar -mx-4 flex gap-1.5 overflow-x-auto px-4 lg:mx-0 lg:px-0">
           {['전체', ...SECTORS].map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setSector(s)}
-              className={`shrink-0 rounded-full border px-3 py-1.5 text-sm transition ${
-                sector === s
-                  ? 'border-slate-900 bg-slate-900 text-white'
-                  : 'border-slate-200 bg-white text-slate-600 hover:border-slate-400'
-              }`}
-            >
+            <button key={s} type="button" onClick={() => setSector(s)} className={`chip ${sector === s ? 'chip-on' : ''}`}>
               {s}
             </button>
           ))}
@@ -40,15 +31,13 @@ export default function CompanyPicker() {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="기업명·약칭·지역 검색 (예: 한전, 울산)"
-          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 lg:w-72"
+          placeholder="🔎 기업명·약칭·지역 (예: 한전, 울산)"
+          className="input w-full lg:w-72"
         />
       </div>
 
       {visible.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-slate-300 py-10 text-center text-sm text-slate-500">
-          검색 결과가 없어요.
-        </p>
+        <p className="card muted py-10 text-center text-sm">검색 결과가 없어요.</p>
       ) : (
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {visible.map((c) => {
@@ -59,22 +48,22 @@ export default function CompanyPicker() {
                   type="button"
                   aria-pressed={on}
                   onClick={() => toggle(c.id)}
-                  className={`relative flex h-full w-full flex-col items-start gap-1 rounded-xl border-2 p-3 text-left transition ${
+                  className={`relative flex h-full w-full flex-col items-start gap-1 rounded-2xl p-3.5 text-left transition ${
                     on
-                      ? 'border-brand-500 bg-brand-50 shadow-sm'
-                      : 'border-transparent bg-white shadow-sm ring-1 ring-slate-200 hover:ring-slate-400'
+                      ? 'bg-brand-50 shadow-card ring-2 ring-brand-500 dark:bg-brand-900/30'
+                      : 'card hover:ring-slate-400 dark:hover:ring-slate-600'
                   }`}
                 >
                   <span
-                    className={`absolute right-2.5 top-2.5 flex h-5 w-5 items-center justify-center rounded-full text-xs ${
-                      on ? 'bg-brand-500 text-white' : 'border border-slate-300 text-transparent'
+                    className={`absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold transition ${
+                      on ? 'scale-110 bg-pick-500 text-white' : 'border border-slate-300 text-transparent dark:border-slate-600'
                     }`}
                   >
                     ✓
                   </span>
                   <span className="text-2xl">{c.emoji}</span>
-                  <span className="pr-5 text-sm font-semibold leading-snug text-slate-900">{c.name}</span>
-                  <span className="text-xs text-slate-500">
+                  <span className="pr-5 text-sm font-bold leading-snug">{c.name}</span>
+                  <span className="muted text-xs">
                     {c.sector} · {c.hq}
                   </span>
                 </button>
@@ -84,9 +73,9 @@ export default function CompanyPicker() {
         </ul>
       )}
 
-      <div className="flex items-center justify-between text-sm text-slate-500">
+      <div className="muted flex items-center justify-between text-sm">
         <span>
-          <b className="text-brand-600">{picks.length}</b>곳 선택됨
+          <b className="text-brand-600 dark:text-brand-300">{picks.length}</b>곳 PICK
         </span>
         {picks.length > 0 && (
           <button type="button" onClick={clear} className="underline-offset-2 hover:underline">

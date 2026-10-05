@@ -18,5 +18,23 @@ export function naverNewsSearchUrl(companyName) {
   return `https://search.naver.com/search.naver?where=news&sort=1&query=${encodeURIComponent(companyName)}`;
 }
 
+/** 구글 캘린더 '일정 추가' 화면 주소: 마감일 하루 종일 일정 */
+export function googleCalendarUrl({ title, deadline, url, companyName }) {
+  const d = deadline.replace(/-/g, '');
+  const next = new Date(Date.parse(deadline) + 86400000).toISOString().slice(0, 10).replace(/-/g, '');
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: `[마감] ${companyName} ${title}`,
+    dates: `${d}/${next}`,
+    details: `MS PICK에서 저장한 공고\n${url}`,
+  });
+  return `https://calendar.google.com/calendar/render?${params}`;
+}
+
+/** 내 픽 공유 주소: /?picks=kepco,iiac */
+export function sharePicksUrl(picks) {
+  return `${window.location.origin}/?picks=${picks.join(',')}`;
+}
+
 /** 잡알리오(공공기관 채용정보시스템) */
 export const JOB_ALIO_URL = 'https://job.alio.go.kr/recruit.do';

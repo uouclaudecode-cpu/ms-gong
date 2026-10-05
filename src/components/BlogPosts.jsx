@@ -14,7 +14,7 @@ export default function BlogPosts({ company }) {
   return (
     <section id="blog" className="scroll-mt-20 space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        <h2 className="flex items-center gap-1.5 text-lg font-bold">
+        <h2 className="section-title flex items-center gap-1.5">
           <span className="rounded bg-[#03c75a] px-1 text-xs font-black leading-5 text-white">N</span>
           블로그 합격 후기·공부법
         </h2>
@@ -29,9 +29,7 @@ export default function BlogPosts({ company }) {
             role="tab"
             aria-selected={kw === k.key}
             onClick={() => setKw(k.key)}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition ${
-              kw === k.key ? 'bg-[#03c75a] text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:ring-slate-400'
-            }`}
+            className={`chip ${kw === k.key ? '!bg-[#03c75a] !text-white !ring-[#03c75a]' : ''}`}
           >
             {k.label}
           </button>
@@ -44,14 +42,9 @@ export default function BlogPosts({ company }) {
         <ul className="grid gap-3 sm:grid-cols-2">
           {(result.data?.items ?? []).map((p) => (
             <li key={p.url + p.title}>
-              <a
-                href={p.url}
-                target="_blank"
-                rel="noreferrer"
-                className="flex h-full flex-col gap-1.5 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-md hover:ring-emerald-300"
-              >
-                <p className="line-clamp-2 font-semibold leading-snug text-slate-900">{p.title}</p>
-                <p className="line-clamp-2 text-sm text-slate-500">{p.description}</p>
+              <a href={p.url} target="_blank" rel="noreferrer" className="card card-hover flex h-full flex-col gap-1.5 p-4 hover:!ring-emerald-300">
+                <p className="line-clamp-2 font-semibold leading-snug text-slate-900 dark:text-slate-100">{p.title}</p>
+                <p className="muted line-clamp-2 text-sm">{p.description}</p>
                 <p className="mt-auto pt-1 text-xs text-slate-400">
                   {p.blogger} · {p.postedAt}
                 </p>
@@ -59,9 +52,7 @@ export default function BlogPosts({ company }) {
             </li>
           ))}
           {result.data?.items?.length === 0 && (
-            <li className="col-span-full rounded-xl border border-dashed border-slate-300 py-8 text-center text-sm text-slate-500">
-              관련 글을 찾지 못했어요.
-            </li>
+            <li className="card muted col-span-full py-8 text-center text-sm">관련 글을 찾지 못했어요.</li>
           )}
         </ul>
       )}
@@ -70,7 +61,7 @@ export default function BlogPosts({ company }) {
         href={naverBlogSearchUrl(company.name, keyword.query)}
         target="_blank"
         rel="noreferrer"
-        className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700 hover:underline"
+        className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-700 hover:underline dark:text-emerald-400"
       >
         네이버에서 &lsquo;{company.name} {keyword.query}&rsquo; 더 보기 ↗
       </a>

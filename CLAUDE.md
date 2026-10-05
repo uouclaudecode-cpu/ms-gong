@@ -1,6 +1,6 @@
-# 공기업 패스 (ms-gong): Claude 작업 안내
+# MS PICK (ms-gong): Claude 작업 안내
 
-공기업 취준생이 관심 기업(My 픽)을 골라 채용 공고·뉴스·네이버 블로그 합격 후기를 모아 보는 사이트.
+MS PICK = My Selection PICK. 공기업 취준생이 관심 기업(My 픽)을 골라 채용 공고·뉴스·네이버 블로그 합격 후기를 모아 보는 사이트.
 Vite 5 + React 18 + React Router 6 + Tailwind 3 (로컬 Node 18이라 이 버전에 맞춤). 배포: Vercel.
 원격: `uouclaudecode-cpu/ms-gong`. `main`에 푸시하면 Vercel이 다시 배포합니다.
 
@@ -13,8 +13,9 @@ Vite 5 + React 18 + React Router 6 + Tailwind 3 (로컬 Node 18이라 이 버전
 - `src/data/api.js` 화면이 데이터를 가져오는 유일한 곳. 키가 없거나 실패하면 `mock.js` 예시로 대신하고 `live: false`
 - `src/data/companies.js` 기업 목록. `id`는 URL·localStorage에 쓰이므로 바꾸지 않음.
   `name`은 잡알리오 기관명과 같아야 공고가 매칭됨
-- `src/context/PickContext.jsx` My 픽 전역 상태 + localStorage(`ms-gong:picks`)
-- 라우트: `/` 대시보드(`?c=기업id` 필터), `/pick`, `/company/:id`(`#blog`로 블로그 섹션)
+- `src/context/PickContext.jsx` 전역 상태 + localStorage: My 픽(`ms-gong:picks`), 고용형태(`ms-gong:hire-types`), 찜한 공고(`ms-gong:saved-jobs`, 공고 객체 통째로), 테마(`ms-gong:theme`)
+- 라우트: `/` 홈(`?c=기업id` 필터, `?picks=a,b` 공유받은 픽), `/calendar`, `/saved`, `/pick`, `/company/:id`(`#blog`)
+- 디자인: Tailwind `darkMode: class`. 공통 모양은 `src/index.css`의 `.card` `.chip` `.btn-primary` 등을 씀. 색은 `brand`(보라)·`pick`(민트)
 
 ## 환경변수 (`.env.example` 참고)
 `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET`, `DATA_GO_KR_KEY`.

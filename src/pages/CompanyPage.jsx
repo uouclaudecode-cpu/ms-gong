@@ -36,43 +36,36 @@ export default function CompanyPage() {
   return (
     <div className="space-y-8">
       <div className="space-y-4">
-        <Link to="/" className="text-sm text-slate-500 hover:text-slate-800">
-          ← 대시보드
+        <Link to="/" className="muted text-sm hover:text-slate-800 dark:hover:text-white">
+          ← 홈
         </Link>
-        <header className="flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:flex-row sm:items-center">
-          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-4xl">
+        <header className="card flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
+          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-4xl dark:bg-slate-800">
             {company.emoji}
           </span>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold">{company.name}</h1>
-            <p className="text-sm text-slate-500">
+            <h1 className="text-2xl font-black tracking-tight">{company.name}</h1>
+            <p className="muted text-sm">
               {company.sector} · 본사 {company.hq}
             </p>
           </div>
           <div className="flex gap-2">
-            <a
-              href={naverNewsSearchUrl(company.name)}
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"
-            >
+            <a href={naverNewsSearchUrl(company.name)} target="_blank" rel="noreferrer" className="btn-ghost">
               뉴스 검색 ↗
             </a>
             <button
               type="button"
               onClick={() => toggle(company.id)}
-              className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
-                picked ? 'bg-amber-100 text-amber-800' : 'bg-brand-500 text-white hover:bg-brand-600'
-              }`}
+              className={picked ? 'btn bg-pick-500/15 text-pick-500 ring-1 ring-pick-500/40' : 'btn-primary'}
             >
-              {picked ? '★ My 픽' : '☆ My 픽에 추가'}
+              {picked ? '✓ PICK 됨' : '+ My 픽에 추가'}
             </button>
           </div>
         </header>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+        <div className="min-w-0 lg:col-span-2">
           {jobs.loading ? <SkeletonCards count={2} /> : <JobTimeline result={jobs.data} companyIds={[id]} showCompany={false} />}
         </div>
         {news.loading ? <SkeletonCards count={3} className="space-y-3" /> : <NewsList result={news.data} companyIds={[id]} />}
