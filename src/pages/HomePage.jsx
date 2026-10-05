@@ -51,7 +51,7 @@ function Stat({ label, value, tone = 'text-slate-900' }) {
 }
 
 export default function HomePage() {
-  const { picks } = usePicks();
+  const { picks, hireTypes } = usePicks();
   const [params, setParams] = useSearchParams();
   const jobsState = useAsync(fetchJobs, []);
   const newsState = useAsync(() => (picks.length ? fetchNews(picks) : Promise.resolve(null)), [picks.join(',')]);
@@ -63,7 +63,8 @@ export default function HomePage() {
   const scope = active === 'all' ? picks : [active];
   const setActive = (id) => setParams(id === 'all' ? {} : { c: id }, { replace: true });
 
-  const allJobs = jobsState.data?.items ?? [];
+  // 통계·카드도 공고 목록과 같은 고용형태 필터를 따릅니다
+  const allJobs = (jobsState.data?.items ?? []).filter((j) => hireTypes.includes(j.type));
   const openJobs = allJobs
     .filter((j) => scope.includes(j.companyId) && getDday(j.deadline).tone !== 'closed')
     .sort(byDeadline);

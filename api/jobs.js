@@ -29,12 +29,12 @@ async function fetchPage(pageNo) {
   return { rows: data.result ?? [], total: Number(data.totalCount ?? 0) };
 }
 
-const typeOf = (row) => {
-  const s = `${row.recrutSeNm ?? ''} ${row.hireTypeNmLst ?? ''} ${row.recrutPbancTtl ?? ''}`;
-  if (/인턴/.test(s)) return '인턴';
-  if (/경력/.test(s) && !/신입/.test(s)) return '경력';
-  return '신입';
-};
+// 잡알리오 고용형태(hireTypeNmLst, 쉼표로 여러 개): 정규직·무기계약직·비정규직·청년인턴(체험형/채용형)
+// 여러 개면 취준생에게 가장 의미 있는 것 하나를 대표로 씁니다.
+const HIRE_PRIORITY = ['정규직', '인턴', '무기계약직', '비정규직'];
+const hireTypesOf = (row) =>
+  [...new Set((row.hireTypeNmLst ?? '').split(',').map((s) => (s.includes('인턴') ? '인턴' : s.trim())))].filter(Boolean);
+const typeOf = (types) => HIRE_PRIORITY.find((t) => types.includes(t)) ?? '비정규직';
 
 export default async function handler(req, res) {
   if (!process.env.DATA_GO_KR_KEY) return noKey(res, 'DATA_GO_KR_KEY');
@@ -52,7 +52,8 @@ export default async function handler(req, res) {
         id: String(row.recrutPblntSn),
         companyId,
         title: row.recrutPbancTtl,
-        type: typeOf(row),
+        type: typeOf(hireTypesOf(row)), // '정규직' | '인턴' | '무기계약직' | '비정규직'
+        career: row.recrutSeNm ?? null, // '신입' | '경력' | '신입+경력'
         headcount: row.recrutNope ? `${row.recrutNope}명` : null,
         fields: row.ncsCdNmLst ?? null,
         region: row.workRgnNmLst ?? null,

@@ -37,6 +37,17 @@ export function fail(res, err) {
   res.status(502).json({ error: 'upstream', message: String(err?.message ?? err) });
 }
 
+/**
+ * 네이버 검색은 비슷한 기관(한국공항공사 ↔ 한국전력공사)이나 엉뚱한 글도 섞어 주므로
+ * 제목·요약에 기업명(또는 2글자 이상 약칭)이 실제로 들어간 것만 남깁니다.
+ */
+export function mentions(company, text) {
+  const t = text.replace(/\s/g, '');
+  const names = [company.name, ...(company.aliases ?? [])];
+  if (company.short.length >= 2) names.push(company.short);
+  return names.some((n) => t.includes(n.replace(/\s/g, '')));
+}
+
 export function parseIds(raw) {
   return [...new Set(String(raw ?? '').split(','))].filter((id) => COMPANY_BY_ID[id]);
 }

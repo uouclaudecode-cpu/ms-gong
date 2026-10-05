@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
@@ -32,7 +33,7 @@ function localApi() {
 
 export default defineConfig(({ mode }) => {
   // .env.local의 NAVER_CLIENT_ID 등을 서버 함수가 process.env로 읽을 수 있게
-  Object.assign(process.env, loadEnv(mode, process.cwd(), ''));
+  Object.assign(process.env, loadEnv(mode, fileURLToPath(new URL('.', import.meta.url)), ''));
   return {
     plugins: [react(), localApi()],
     server: { port: 5173 },

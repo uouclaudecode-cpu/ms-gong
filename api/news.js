@@ -1,5 +1,5 @@
 // GET /api/news?ids=kepco,iiac → 기업별 최신 뉴스(네이버 뉴스 검색)를 합쳐 최신순으로
-import { cache, cleanText, COMPANY_BY_ID, fail, noKey, parseIds } from './_lib/util.js';
+import { cache, cleanText, COMPANY_BY_ID, fail, mentions, noKey, parseIds } from './_lib/util.js';
 import { hasNaverKey, naverSearch } from './_lib/naver.js';
 
 // 제목·요약에 들어간 단어로 주제를 대략 나눕니다. 위에 있는 규칙이 우선.
@@ -27,11 +27,14 @@ export default async function handler(req, res) {
     const perCompany = await Promise.all(
       ids.map(async (id) => {
         const c = COMPANY_BY_ID[id];
-        // 큰따옴표로 묶어 정확히 기업명이 들어간 기사만
-        const items = await naverSearch('news', `"${c.name}"`, { display: 8, sort: 'date' });
-        return items.map((it) => {
+        const items = await naverSearch('news', c.name, { display: 50, sort: 'date' });
+        // 제목에 기업명이 있는 기사가 3개 이상이면 그것만, 아니면 요약에 언급된 기사까지
+        const inTitle = items.filter((it) => mentions(c, cleanText(it.title)));
+        const picked = inTitle.length >= 3 ? inTitle : items;
+        return picked.flatMap((it) => {
           const title = cleanText(it.title);
           const description = cleanText(it.description);
+          if (!mentions(c, `${title} ${description}`)) return [];
           return {
             id: it.link,
             companyId: id,
@@ -42,7 +45,7 @@ export default async function handler(req, res) {
             press: host(it.originallink || it.link),
             publishedAt: new Date(it.pubDate).toISOString(),
           };
-        });
+        }).slice(0, 8);
       }),
     );
 

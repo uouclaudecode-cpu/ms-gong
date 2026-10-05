@@ -1,6 +1,6 @@
 // GET /api/blog?company=kepco&kw=review → 네이버 블로그 글 목록
 import { BLOG_KEYWORDS } from '../src/lib/links.js';
-import { cache, cleanText, COMPANY_BY_ID, fail, noKey } from './_lib/util.js';
+import { cache, cleanText, COMPANY_BY_ID, fail, mentions, noKey } from './_lib/util.js';
 import { hasNaverKey, naverSearch } from './_lib/naver.js';
 
 export default async function handler(req, res) {
@@ -10,7 +10,10 @@ export default async function handler(req, res) {
   if (!hasNaverKey()) return noKey(res, 'NAVER_CLIENT_ID/NAVER_CLIENT_SECRET');
 
   try {
-    const items = await naverSearch('blog', `${company.name} ${kw.query}`, { display: 10, sort: 'sim' });
+    // 넉넉히 받아서 기업명이 들어간 글만 10개 남깁니다
+    const items = (await naverSearch('blog', `${company.name} ${kw.query}`, { display: 50, sort: 'sim' }))
+      .filter((it) => mentions(company, cleanText(`${it.title} ${it.description}`)))
+      .slice(0, 10);
     cache(res, 6 * 3600); // 블로그 후기는 자주 바뀌지 않으니 6시간
     res.status(200).json({
       items: items.map((it) => ({
