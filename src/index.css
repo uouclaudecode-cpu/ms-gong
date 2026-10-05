@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  /* 가로로 넘기는 칩 목록: 스크롤은 되지만 스크롤바는 숨김 */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+  word-break: keep-all;
+}
