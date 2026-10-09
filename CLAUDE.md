@@ -3,7 +3,7 @@
 MS PICK = My Selection PICK. 공기업 취준생이 관심 기업(My 픽)을 골라 채용 공고·뉴스·네이버 블로그 합격 후기를 모아 보는 사이트.
 Vite 5 + React 18 + React Router 6 + Tailwind 3 (로컬 Node 18이라 이 버전에 맞춤). 배포: Vercel.
 원격: `uouclaudecode-cpu/ms-gong`(공개 저장소). `main`에 푸시하면 Vercel이 다시 배포합니다.
-주소: https://ms-pick.vercel.app (예전 주소 ms-gong.vercel.app도 같은 사이트. localStorage는 주소마다 따로라 강제 이동은 하지 않음)
+주소: https://ms-gong.vercel.app (사용자가 주소 변경은 원하지 않음)
 
 ## 구조
 - `api/*.js` Vercel 서버 함수. 외부 API 키는 여기서만 씀(브라우저로 보내지 않음). 결과는 CDN 캐시
@@ -42,7 +42,7 @@ GitHub Actions `test.yml`이 main 푸시마다 npm test + build
 ## 앱 설치·공유 이미지·통계
 - 홈 화면 설치: `public/manifest.webmanifest`, `public/sw.js`(캐시 안 함, 오프라인 안내만), `src/components/InstallApp.jsx`
 - 아이콘·공유 미리보기(`public/icon-*.png`, `apple-touch-icon.png`, `og.png`)는 `npm run images`(sharp, 맑은 고딕)로 만들고 결과 PNG를 커밋
-- 공유 미리보기 주소는 `index.html`의 `og:url`·`og:image`(현재 `https://ms-pick.vercel.app`). 주소를 바꾸면 같이 바꿈
+- 공유 미리보기 주소는 `index.html`의 `og:url`·`og:image`(현재 `https://ms-gong.vercel.app`). 주소를 바꾸면 같이 바꿈
 - 방문자 통계: `@vercel/analytics` (`src/main.jsx`). Vercel 프로젝트 Analytics 탭에서 켜야 수집됨
 
 ## 미리 불러 두기 (스냅숏)
