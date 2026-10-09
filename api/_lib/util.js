@@ -51,7 +51,12 @@ const LATIN = /[A-Za-z]/;
  */
 export function mentions(company, text) {
   // 띄어쓰기는 남겨 둡니다: '~와 한전'에서 '한전' 앞 글자가 '와'가 아니라 공백이어야 하니까요
-  const t = text.replace(/\s+/g, ' ');
+  let t = text.replace(/\s+/g, ' ');
+  // 자회사 이름은 띄어 써도('코레일 유통') 먼저 지워 둡니다
+  for (const e of company.excludes ?? []) {
+    const re = new RegExp([...e.replace(/\s/g, '')].map((ch) => ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s?'), 'g');
+    t = t.replace(re, '□');
+  }
   const excludes = (company.excludes ?? []).map((e) => e.replace(/\s/g, ''));
   const names = [
     { n: company.name, strict: false },

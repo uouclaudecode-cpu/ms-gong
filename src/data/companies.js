@@ -7,7 +7,7 @@
 export const SECTORS = ['에너지', 'SOC·교통', '금융', '산업·무역', '보건·복지', '고용·노동'];
 
 export const COMPANIES = [
-  { id: 'kepco', code: 'C0247', name: '한국전력공사', short: '한전', sector: '에너지', hq: '전남 나주', emoji: '⚡', excludes: ['한전KPS', '한전KDN', '한전MCS', '한전원자력연료', '한전기술', '한전산업개발', '한전엠씨에스'] },
+  { id: 'kepco', code: 'C0247', name: '한국전력공사', short: '한전', sector: '에너지', hq: '전남 나주', emoji: '⚡', excludes: ['한전KPS', '한전KDN', '한전MCS', '한전원자력연료', '한전기술', '한국전력기술', '한전산업개발', '한전엠씨에스'] },
   { id: 'khnp', code: 'C0220', name: '한국수력원자력', short: '한수원', sector: '에너지', hq: '경북 경주', emoji: '⚛️', aliases: ['한국수력원자력(주)'] },
   { id: 'kogas', code: 'C0147', name: '한국가스공사', short: '가스공사', sector: '에너지', hq: '대구', emoji: '🔥' },
   { id: 'knoc', code: 'C0214', name: '한국석유공사', short: '석유공사', sector: '에너지', hq: '울산', emoji: '🛢️' },

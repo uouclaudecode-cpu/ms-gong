@@ -1,10 +1,12 @@
 // 외부 검색 링크를 만드는 함수들. 키워드는 여기서만 관리합니다.
 
+// query: '네이버에서 더 보기' 검색어. searches: 서버가 블로그 글을 모을 때 쓰는 검색어들
+// (사람들이 실제로 제목에 많이 쓰는 표현으로: '공부법'보다 '필기 후기'가 훨씬 많이 걸립니다)
 export const BLOG_KEYWORDS = [
-  { key: 'review', label: 'NCS 합격 후기', query: 'NCS 합격 후기' },
-  { key: 'written', label: '필기 공부법', query: '필기 공부법' },
-  { key: 'interview', label: '면접 후기', query: '면접 후기' },
-  { key: 'essay', label: '자소서', query: '자기소개서 항목' },
+  { key: 'review', label: '합격 후기', query: '합격 후기', searches: ['최종 합격 후기', '합격 후기'] },
+  { key: 'written', label: '필기·NCS', query: '필기 후기', searches: ['필기 후기', '필기시험', 'NCS 후기'] },
+  { key: 'interview', label: '면접 후기', query: '면접 후기', searches: ['면접 후기'] },
+  { key: 'essay', label: '자소서', query: '자소서', searches: ['자소서', '서류 합격'] },
 ];
 
 /** 네이버 블로그 탭 검색 결과 주소 */

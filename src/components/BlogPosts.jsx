@@ -20,6 +20,9 @@ export default function BlogPosts({ company }) {
         </h2>
         <DataStatus result={result.data} source="네이버 블로그" />
       </div>
+      <p className="muted -mt-1 text-xs">
+        제목에 기관명과 주제가 들어간 최근 3년 글만 모았어요. 학원·출판사 홍보 글은 걸렀어요.
+      </p>
 
       <div role="tablist" className="no-scrollbar -mx-4 flex gap-1.5 overflow-x-auto px-4">
         {BLOG_KEYWORDS.map((k) => (

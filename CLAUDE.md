@@ -12,7 +12,7 @@ Vite 5 + React 18 + React Router 6 + Tailwind 3 (로컬 Node 18이라 이 버전
   - 잡알리오 호출은 `api/_lib/util.js`의 `alioList()`(재시도 포함). 개발계정 하루 1,000회 한도를 의식해 캐시를 길게 둠
   - 목록 밖 기관 id는 `resolveCompany()`가 잡알리오에서 이름을 확인(아무 검색어 대리 검색 방지)
   - `/api/news?id=kepco` 기업별 최근 6개월 뉴스(최신순 + "기업명 2026년 7월" 달별 검색으로 과거를 채움, 달마다 최대 12개). 화면은 기업마다 따로 불러 합침. 네이버 뉴스 검색(NAVER API HUB `naverapihub.apigw.ntruss.com`, 헤더 `X-NCP-APIGW-API-KEY-ID/KEY`), 주제(채용·경영평가·정책·이슈)는 단어 규칙으로 분류
-  - `/api/blog?company=kepco&kw=review` 네이버 블로그 검색 (키워드는 `src/lib/links.js`의 `BLOG_KEYWORDS`)
+  - `/api/blog?company=kepco&kw=review` 네이버 블로그 검색 (탭·검색어는 `src/lib/links.js`의 `BLOG_KEYWORDS`). 제목에 기관명+탭 주제, 홍보(`PROMO`)·무관(`OFF_TOPIC`) 글 제외, 최근 3년(모자라면 5년) 최신순
   - 로컬 `npm run dev`에서는 `vite.config.js`의 `localApi` 플러그인이 같은 함수를 실행
 - `src/data/api.js` 화면이 데이터를 가져오는 유일한 곳. 키가 없거나 실패하면 `mock.js` 예시로 대신하고 `live: false`
 - `src/data/companies.js` 기업 목록. `id`는 URL·localStorage에 쓰이므로 바꾸지 않음.
