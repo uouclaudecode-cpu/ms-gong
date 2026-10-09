@@ -1,6 +1,7 @@
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { usePicks } from '../context/PickContext.jsx';
 import Logo from './Logo.jsx';
+import { hasProfile } from '../lib/profile.js';
 import ErrorBoundary from './ErrorBoundary.jsx';
 
 // 화면 상단(PC)과 하단 탭바(모바일)에 같은 메뉴를 씁니다
@@ -22,6 +23,25 @@ function ThemeToggle() {
     >
       {theme === 'dark' ? '☀️' : '🌙'}
     </button>
+  );
+}
+
+function ProfileButton() {
+  const { profile } = usePicks();
+  return (
+    <NavLink
+      to="/profile"
+      aria-label="내 프로필"
+      title="내 프로필 (나에게 맞는 공고)"
+      className={({ isActive }) =>
+        `relative flex h-9 w-9 items-center justify-center rounded-xl text-lg transition hover:bg-slate-100 dark:hover:bg-slate-800 ${
+          isActive ? 'bg-brand-50 dark:bg-brand-900/40' : ''
+        }`
+      }
+    >
+      🎯
+      {!hasProfile(profile) && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-rose-500" aria-hidden />}
+    </NavLink>
   );
 }
 
@@ -64,6 +84,7 @@ export default function Layout() {
                 </NavLink>
               ))}
             </nav>
+            <ProfileButton />
             <ThemeToggle />
           </div>
         </div>

@@ -21,10 +21,13 @@ Vite 5 + React 18 + React Router 6 + Tailwind 3 (로컬 Node 18이라 이 버전
 - 화면에서 기업 찾기는 `src/data/registry.js`의 `getCompany(id)` (목록 + 목록 밖 기관). `COMPANY_BY_ID`를 화면에서 직접 쓰지 않음
 - 기업명 언급 판별 `mentions()`(api/_lib/util.js): 자회사·뒤에 영문(한전KPS)·약칭 앞 한글(인천국제공항공사)을 거름
 - 기관 정보(신입 초임·평균보수·정규직 수)는 `public/data/company-info.json`. `npm run company-info`로 ALIO 통계에서 새로 받음(1년에 한 번쯤)
-- 지원 현황 단계·새 공고·신입/경력 규칙은 `src/lib/apply.js`
-- `src/context/PickContext.jsx` 전역 상태 + localStorage: My 픽(`ms-gong:picks`), 고용형태(`ms-gong:hire-types`), 신입/경력(`ms-gong:career`), 찜한 공고(`ms-gong:saved-jobs`, 공고 객체 통째로 + `status` 지원 단계), 목록 밖 기관 이름(`ms-gong:institutions`), 테마(`ms-gong:theme`)
+- 지원 현황 단계·전형 일정(`SCHEDULE_KINDS`)·새 공고·신입/경력 규칙은 `src/lib/apply.js`
+- 내 프로필·'나에게 맞는 공고'는 `src/lib/profile.js`(`matchJob`: reasons/blockers/score). 공고의 `ncs`·`regions`·`edu`·`replacement`·`prefs`는 `api/_lib/builders.js`에서 만듦(`prefsOf` 키 = `PREFS` 키). 공고 모양을 바꾸면 `JOBS_VERSION`을 올림(예전 스냅숏 무시)
+- 공고 필터(고용형태·신입/경력·대체인력)는 `usePicks().passesFilters` 하나를 홈·캘린더·추천이 같이 씀
+- '지난 방문 이후'는 `src/hooks/useSinceLastVisit.js`(localStorage `ms-gong:visit`, 이번 방문 동안은 sessionStorage에 고정)
+- `src/context/PickContext.jsx` 전역 상태 + localStorage: My 픽(`ms-gong:picks`), 고용형태(`ms-gong:hire-types`), 신입/경력(`ms-gong:career`), 찜한 공고(`ms-gong:saved-jobs`, 공고 객체 통째로 + `status` 지원 단계 + 전형 일정 날짜·`memo`), 대체인력 빼기(`ms-gong:hide-replacement`), 프로필(`ms-gong:profile`), 목록 밖 기관 이름(`ms-gong:institutions`), 테마(`ms-gong:theme`)
 - 잡알리오 공고 링크는 `jobLink()`(src/lib/links.js)로: 휴대폰이면 모바일 공고 페이지(`/mobile2021/recruit/recruitView.do?idx=`). PC 주소는 휴대폰에서 모바일 첫 화면으로 튕김
-- 라우트: `/` 홈(`?c=기업id` 필터, `?picks=a,b` 공유받은 픽), `/calendar`, `/saved`, `/pick`, `/company/:id`(`#blog`)
+- 라우트: `/` 홈(`?c=기업id` 필터, `?picks=a,b` 공유받은 픽, `#matched`·`#jobs`), `/calendar`, `/saved`, `/pick`, `/profile`, `/company/:id`(`#blog`)
 - 디자인: Tailwind `darkMode: class`. 공통 모양은 `src/index.css`의 `.card` `.chip` `.btn-primary` 등을 씀. 색은 `brand`(보라)·`pick`(민트)
 
 ## 환경변수 (`.env.example` 참고)

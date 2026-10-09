@@ -1,10 +1,13 @@
 // 홈. My 픽이 비어 있으면 온보딩(기업 고르기)부터 보여 줍니다.
 // 공유 링크(/?picks=kepco,iiac)로 들어오면 그 목록을 적용할지 물어봅니다.
-import { Link, useSearchParams } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import CompanyCard from '../components/CompanyCard.jsx';
 import CompanyPicker from '../components/CompanyPicker.jsx';
 import DdayBadge from '../components/DdayBadge.jsx';
 import InstallApp from '../components/InstallApp.jsx';
+import MatchedJobs from '../components/MatchedJobs.jsx';
+import WhatsNew from '../components/WhatsNew.jsx';
 import JobTimeline from '../components/JobTimeline.jsx';
 import Logo from '../components/Logo.jsx';
 import NewsList from '../components/NewsList.jsx';
@@ -15,6 +18,7 @@ import { fetchNews } from '../data/api.js';
 import { getCompany } from '../data/registry.js';
 import { useAsync } from '../hooks/useAsync.js';
 import { useJobs } from '../hooks/useJobs.js';
+import { useSinceLastVisit } from '../hooks/useSinceLastVisit.js';
 import { CAREERS, isNewJob, stageOf } from '../lib/apply.js';
 import { byDeadline, formatKoreanDate, getDday, todayKST } from '../lib/dday.js';
 import { jobLink } from '../lib/links.js';
@@ -84,10 +88,23 @@ function Stat({ label, value, tone = '', sub }) {
 }
 
 export default function HomePage() {
-  const { picks, setPicks, hireTypes, career, saved } = usePicks();
+  const { picks, setPicks, hireTypes, career, saved, passesFilters } = usePicks();
   const [params, setParams] = useSearchParams();
   const jobsState = useJobs();
   const newsState = useAsync(() => (picks.length ? fetchNews(picks) : Promise.resolve(null)), [picks.join(',')]);
+  const allItems = jobsState.data?.items ?? [];
+  // 예시 데이터일 때는 '새 소식'을 계산하지 않습니다
+  const visit = useSinceLastVisit(jobsState.data?.live ? allItems : null);
+  // 프로필 화면의 '맞는 공고 보기'(/#matched)로 오면 그 위치로
+  const { hash } = useLocation();
+  useEffect(() => {
+    if (hash && !jobsState.loading) document.querySelector(hash)?.scrollIntoView({ behavior: 'smooth' });
+  }, [hash, jobsState.loading]);
+  const matched = (
+    <Safe name="나에게 맞는 공고">
+      {jobsState.loading ? <SkeletonCards count={3} className="grid gap-3 sm:grid-cols-3" /> : <MatchedJobs jobs={allItems} />}
+    </Safe>
+  );
 
   const shared = (params.get('picks') ?? '').split(',').filter((id) => getCompany(id));
   const dropShared = () => {
@@ -110,6 +127,7 @@ export default function HomePage() {
       <div className="space-y-6">
         {banner}
         <Onboarding />
+        {matched}
         <Safe name="앱 설치 안내">
           <InstallApp />
         </Safe>
@@ -122,9 +140,9 @@ export default function HomePage() {
   const scope = active === 'all' ? picks : [active];
   const setActive = (id) => setParams(id === 'all' ? {} : { c: id }, { replace: true });
 
-  // 통계·카드도 공고 목록과 같은 고용형태·신입/경력 필터를 따릅니다
+  // 통계·카드도 공고 목록과 같은 고용형태·신입/경력·대체인력 필터를 따릅니다
   const careerOpt = CAREERS.find((c) => c.key === career);
-  const allJobs = (jobsState.data?.items ?? []).filter((j) => hireTypes.includes(j.type) && careerOpt.test(j));
+  const allJobs = allItems.filter(passesFilters);
   const openJobs = allJobs
     .filter((j) => scope.includes(j.companyId) && getDday(j.deadline).tone !== 'closed')
     .sort(byDeadline);
@@ -146,6 +164,15 @@ export default function HomePage() {
           <Logo />
         </div>
       </div>
+
+      <Safe name="새 소식">
+        <WhatsNew
+          jobs={allItems}
+          newIds={visit.newIds}
+          prevAt={visit.prevAt}
+          onShowNew={() => document.getElementById('jobs')?.scrollIntoView({ behavior: 'smooth' })}
+        />
+      </Safe>
 
       <PickFilterBar picks={picks} active={active} onChange={setActive} />
 
@@ -184,6 +211,8 @@ export default function HomePage() {
           <DdayBadge deadline={next.deadline} />
         </a>
       )}
+
+      {matched}
 
       <div className="grid gap-8 lg:grid-cols-3 lg:gap-6">
         <div className="min-w-0 lg:col-span-2">

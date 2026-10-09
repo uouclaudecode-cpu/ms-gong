@@ -1,13 +1,17 @@
-// 사용자 설정 전역 상태: My 픽 공기업 · 보고 싶은 고용형태·신입/경력 · 찜한 공고(지원 현황) · 화면 테마.
+// 사용자 설정 전역 상태: My 픽 공기업 · 보고 싶은 고용형태·신입/경력·대체인력 · 찜한 공고(지원 현황·일정·메모)
+// · 내 프로필(나에게 맞는 공고) · 화면 테마.
 // 로그인이 없으므로 전부 이 브라우저 localStorage에 저장합니다.
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { isKnownCompanyId, registerInstitutions } from '../data/registry.js';
 import { CAREERS, STAGE_BY_KEY } from '../lib/apply.js';
+import { EMPTY_PROFILE } from '../lib/profile.js';
 
 const KEYS = {
   picks: 'ms-gong:picks',
   hire: 'ms-gong:hire-types',
   career: 'ms-gong:career',
+  replacement: 'ms-gong:hide-replacement',
+  profile: 'ms-gong:profile',
   saved: 'ms-gong:saved-jobs',
   theme: 'ms-gong:theme',
 };
@@ -52,6 +56,8 @@ export function PickProvider({ children }) {
   });
   // 공고가 마감돼 목록에서 사라져도 찜 목록에는 남도록 공고 정보를 통째로 저장합니다.
   const [saved, setSaved] = useState(() => arr(load(KEYS.saved, [])).filter((j) => j?.id && isKnownCompanyId(j.companyId)));
+  const [hideReplacement, setHideReplacement] = useState(() => load(KEYS.replacement, true) !== false);
+  const [profile, setProfile] = useState(() => ({ ...EMPTY_PROFILE, ...(load(KEYS.profile, null) ?? {}) }));
   const [theme, setTheme] = useState(initialTheme);
   // 그 밖의 공공기관 이름을 새로 알게 되면 화면을 다시 그리게 하는 숫자
   const [institutionsVersion, setInstitutionsVersion] = useState(0);
@@ -59,6 +65,8 @@ export function PickProvider({ children }) {
   useEffect(() => save(KEYS.picks, picks), [picks]);
   useEffect(() => save(KEYS.hire, hireTypes), [hireTypes]);
   useEffect(() => save(KEYS.career, career), [career]);
+  useEffect(() => save(KEYS.replacement, hideReplacement), [hideReplacement]);
+  useEffect(() => save(KEYS.profile, profile), [profile]);
   useEffect(() => save(KEYS.saved, saved), [saved]);
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
@@ -82,7 +90,17 @@ export function PickProvider({ children }) {
     if (!STAGE_BY_KEY[status]) return;
     setSaved((prev) => prev.map((j) => (j.id === id ? { ...j, status, statusAt: new Date().toISOString() } : j)));
   }, []);
+  /** 찜한 공고에 일정·메모 등 덧붙이기: patch 예 { written: '2026-10-25', memo: '...' } */
+  const updateSaved = useCallback((id, patch) => {
+    setSaved((prev) => prev.map((j) => (j.id === id ? { ...j, ...patch } : j)));
+  }, []);
   const toggleTheme = useCallback(() => setTheme((t) => (t === 'dark' ? 'light' : 'dark')), []);
+
+  /** 공고 목록·통계·캘린더·추천이 함께 쓰는 필터: 고용형태 + 신입/경력 + 대체인력 */
+  const passesFilters = useMemo(() => {
+    const careerTest = CAREERS.find((c) => c.key === career).test;
+    return (j) => hireTypes.includes(j.type) && careerTest(j) && !(hideReplacement && j.replacement);
+  }, [hireTypes, career, hideReplacement]);
   const addInstitutions = useCallback((list) => {
     if (registerInstitutions(list)) setInstitutionsVersion((v) => v + 1);
   }, []);
@@ -90,12 +108,13 @@ export function PickProvider({ children }) {
   const value = useMemo(
     () => ({
       picks, toggle, isPicked, clear, setPicks,
-      hireTypes, toggleHireType, career, setCareer,
-      saved, isSaved, toggleSaved, setSavedStatus,
+      hireTypes, toggleHireType, career, setCareer, hideReplacement, setHideReplacement, passesFilters,
+      saved, isSaved, toggleSaved, setSavedStatus, updateSaved,
+      profile, setProfile,
       theme, toggleTheme,
       institutionsVersion, addInstitutions,
     }),
-    [picks, toggle, isPicked, clear, hireTypes, toggleHireType, career, saved, isSaved, toggleSaved, setSavedStatus, theme, toggleTheme, institutionsVersion, addInstitutions],
+    [picks, toggle, isPicked, clear, hireTypes, toggleHireType, career, hideReplacement, passesFilters, saved, isSaved, toggleSaved, setSavedStatus, updateSaved, profile, theme, toggleTheme, institutionsVersion, addInstitutions],
   );
   return <PickContext.Provider value={value}>{children}</PickContext.Provider>;
 }

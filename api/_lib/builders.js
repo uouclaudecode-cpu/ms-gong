@@ -18,6 +18,27 @@ export function hireTypeOf(row) {
 
 const viewUrl = (sn) => `https://job.alio.go.kr/recruitview.do?idx=${sn}`;
 
+// 공고 데이터 모양이 바뀌면 올립니다. 미리 불러 둔 파일이 예전 모양이면 쓰지 않습니다(api/_lib/snapshot.js).
+export const JOBS_VERSION = 2;
+
+const list = (s) => (s ?? '').split(',').map((v) => v.trim()).filter(Boolean);
+
+// 우대 조건·지원 자격 글에서 찾는 표시 (키는 src/lib/profile.js의 PREFS와 같음)
+const PREF_RULES = [
+  ['local', /지역인재|이전지역|지역 인재/],
+  ['veteran', /취업지원대상자|보훈/],
+  ['disabled', /장애/],
+  ['lowincome', /저소득|기초생활|차상위/],
+  ['defector', /북한이탈|새터민/],
+  ['multicultural', /다문화/],
+  ['selfreliant', /자립준비|보호종료/],
+  ['history', /한국사/],
+];
+export function prefsOf(row) {
+  const text = `${row.prefCondCn ?? ''} ${row.aplyQlfcCn ?? ''}`;
+  return PREF_RULES.filter(([, re]) => re.test(text)).map(([key]) => key);
+}
+
 /** 진행 중 공고 전부 (최대 1,000건) */
 async function ongoingRows() {
   const first = await alioList({ ongoingYn: 'Y', numOfRows: '100', pageNo: '1' });
@@ -58,9 +79,15 @@ export async function buildJobs() {
       startsAt: ymd8(row.pbancBgngYmd),
       deadline: ymd8(row.pbancEndYmd),
       url: viewUrl(row.recrutPblntSn),
+      // 개인 맞춤용: NCS 직무 분야·근무 지역·학력 조건·대체인력·우대 조건
+      ncs: list(row.ncsCdNmLst),
+      regions: list(row.workRgnNmLst),
+      edu: list(row.acbgCondNmLst),
+      replacement: row.replmprYn === 'Y',
+      prefs: prefsOf(row),
     };
   });
-  return { items, institutions: [...institutions.values()], codes };
+  return { version: JOBS_VERSION, items, institutions: [...institutions.values()], codes };
 }
 
 /** 최근 공고를 낸 목록 밖 공공기관 (진행 중 + 최근 마감 1,500건) */

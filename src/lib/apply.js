@@ -13,6 +13,21 @@ export const STAGES = [
 export const STAGE_BY_KEY = Object.fromEntries(STAGES.map((s) => [s.key, s]));
 export const stageOf = (job) => STAGE_BY_KEY[job.status] ?? STAGES[0];
 
+// 찜한 공고에 적어 두는 전형 일정 (공고 객체에 같은 키로 'YYYY-MM-DD' 저장)
+export const SCHEDULE_KINDS = [
+  { key: 'docsResult', label: '서류 발표', icon: '📄' },
+  { key: 'written', label: '필기', icon: '✍️' },
+  { key: 'interview', label: '면접', icon: '🎤' },
+  { key: 'finalResult', label: '최종 발표', icon: '🎉' },
+];
+
+/** 찜한 공고들의 일정 → [{ job, kind, date }] 날짜순 */
+export function schedulesOf(savedJobs) {
+  return savedJobs
+    .flatMap((job) => SCHEDULE_KINDS.filter((k) => job[k.key]).map((kind) => ({ job, kind, date: job[kind.key] })))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
 /** 어제·오늘 시작한 공고 = 새 공고 */
 export function isNewJob(job, today = todayKST()) {
   return Boolean(job.startsAt) && job.startsAt >= addDays(-1, today) && job.startsAt <= today;

@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { HIRE_TYPES, usePicks } from '../context/PickContext.jsx';
 import { getCompany } from '../data/registry.js';
 import { CAREERS, isNewJob } from '../lib/apply.js';
+import { hasProfile, isGoodMatch, matchJob } from '../lib/profile.js';
 import { byDeadline, getDday } from '../lib/dday.js';
 import { JOB_ALIO_URL } from '../lib/links.js';
 import DataStatus from './DataStatus.jsx';
@@ -59,9 +60,10 @@ function CareerFilter({ counts }) {
 }
 
 export default function JobTimeline({ result, companyIds, showCompany = true, title = '📅 채용 공고' }) {
-  const { hireTypes, career } = usePicks();
+  const { hireTypes, career, hideReplacement, setHideReplacement, profile } = usePicks();
   const [showClosed, setShowClosed] = useState(false);
   const [onlyNew, setOnlyNew] = useState(false);
+  const [onlyMatch, setOnlyMatch] = useState(false);
   const [query, setQuery] = useState('');
   const [region, setRegion] = useState('');
 
@@ -73,19 +75,25 @@ export default function JobTimeline({ result, companyIds, showCompany = true, ti
 
   // 숫자는 진행 중 공고 기준. 고용형태 수는 신입/경력 필터를, 신입/경력 수는 고용형태 필터를 따릅니다
   const careerTest = CAREERS.find((c) => c.key === career).test;
-  const open = mine.filter(isOpen);
+  const replacementCount = mine.filter((j) => isOpen(j) && j.replacement).length;
+  const replacementOk = (j) => !(hideReplacement && j.replacement);
+  const open = mine.filter((j) => isOpen(j) && replacementOk(j));
+  const matchOk = (j) => isGoodMatch(matchJob(j, profile));
   const counts = {};
   for (const j of open.filter(careerTest)) counts[j.type] = (counts[j.type] ?? 0) + 1;
   const careerCounts = Object.fromEntries(
     CAREERS.map((c) => [c.key, open.filter((j) => hireTypes.includes(j.type) && c.test(j)).length]),
   );
   const newCount = open.filter((j) => hireTypes.includes(j.type) && careerTest(j) && isNewJob(j)).length;
+  const matchCount = hasProfile(profile) ? open.filter((j) => hireTypes.includes(j.type) && careerTest(j) && matchOk(j)).length : 0;
 
   const q = query.trim().replace(/\s/g, '');
   const filtered = mine
     .filter((j) => hireTypes.includes(j.type))
     .filter(careerTest)
+    .filter(replacementOk)
     .filter((j) => !onlyNew || isNewJob(j))
+    .filter((j) => !onlyMatch || matchOk(j))
     .filter((j) => !region || regionsOf(j).includes(region))
     .filter((j) => {
       if (!q) return true;
@@ -97,7 +105,7 @@ export default function JobTimeline({ result, companyIds, showCompany = true, ti
   const list = showClosed ? filtered : filtered.filter(isOpen);
 
   return (
-    <section className="space-y-3">
+    <section id="jobs" className="scroll-mt-20 space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         <h2 className="section-title">{title}</h2>
         <DataStatus result={result} source="잡알리오" />
@@ -140,6 +148,25 @@ export default function JobTimeline({ result, companyIds, showCompany = true, ti
         >
           🆕 새 공고 <span className="opacity-70">{newCount}</span>
         </button>
+        {hasProfile(profile) && (
+          <button
+            type="button"
+            aria-pressed={onlyMatch}
+            onClick={() => setOnlyMatch((v) => !v)}
+            className={`chip flex items-center gap-1 !py-1 text-xs ${onlyMatch ? 'chip-brand' : ''}`}
+          >
+            🎯 내 조건 <span className="opacity-70">{matchCount}</span>
+          </button>
+        )}
+        <button
+          type="button"
+          aria-pressed={hideReplacement}
+          onClick={() => setHideReplacement((v) => !v)}
+          title="육아휴직 대체 같은 단기 대체인력 공고"
+          className={`chip flex items-center gap-1 !py-1 text-xs ${hideReplacement ? 'chip-on' : ''}`}
+        >
+          {hideReplacement ? '✓ 대체인력 빼기' : '+ 대체인력 포함'} <span className="opacity-60">{replacementCount}</span>
+        </button>
         <span className="w-px shrink-0 bg-slate-200 dark:bg-slate-700" aria-hidden />
         <HireTypeFilter counts={counts} />
       </div>
@@ -149,7 +176,7 @@ export default function JobTimeline({ result, companyIds, showCompany = true, ti
           <p>
             {!hireTypes.length
               ? '위에서 고용형태를 하나 이상 골라 주세요.'
-              : q || region || onlyNew
+              : q || region || onlyNew || onlyMatch
                 ? '조건에 맞는 공고가 없어요.'
                 : '선택한 고용형태로 진행 중인 공고가 없어요.'}
           </p>

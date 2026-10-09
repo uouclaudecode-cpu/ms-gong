@@ -4,13 +4,17 @@
 // 없거나 너무 오래됐을 때만 잡알리오를 직접 부릅니다(10~30초).
 const BASE = process.env.SNAPSHOT_BASE ?? 'https://raw.githubusercontent.com/uouclaudecode-cpu/ms-gong/data';
 
-/** name 예: 'jobs', 'institutions', 'trend/kepco'. maxAgeMs보다 오래됐거나 못 읽으면 null */
-export async function readSnapshot(name, maxAgeMs) {
+/**
+ * name 예: 'jobs', 'institutions', 'trend/kepco'.
+ * maxAgeMs보다 오래됐거나, version이 다르거나(데이터 모양이 바뀜), 못 읽으면 null
+ */
+export async function readSnapshot(name, maxAgeMs, version) {
   try {
     const r = await fetch(`${BASE}/${name}.json`, { signal: AbortSignal.timeout(4000) });
     if (!r.ok) return null;
     const snap = await r.json();
     if (!snap?.generatedAt || Date.now() - Date.parse(snap.generatedAt) > maxAgeMs) return null;
+    if (version !== undefined && snap.data?.version !== version) return null;
     return snap;
   } catch {
     return null;
@@ -18,8 +22,8 @@ export async function readSnapshot(name, maxAgeMs) {
 }
 
 /** 스냅숏이 있으면 그걸, 없으면 build()로 직접 만듭니다 */
-export async function snapshotOr(name, maxAgeMs, build) {
-  const snap = await readSnapshot(name, maxAgeMs);
+export async function snapshotOr(name, maxAgeMs, build, version) {
+  const snap = await readSnapshot(name, maxAgeMs, version);
   if (snap) return { ...snap.data, generatedAt: snap.generatedAt, from: 'snapshot' };
   return { ...(await build()), generatedAt: new Date().toISOString(), from: 'live' };
 }
