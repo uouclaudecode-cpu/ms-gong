@@ -31,16 +31,17 @@ function ProfileButton() {
   return (
     <NavLink
       to="/profile"
-      aria-label="내 프로필"
-      title="내 프로필 (나에게 맞는 공고)"
+      title="내 프로필로 나에게 맞는 공고 찾기"
       className={({ isActive }) =>
-        `relative flex h-9 w-9 items-center justify-center rounded-xl text-lg transition hover:bg-slate-100 dark:hover:bg-slate-800 ${
-          isActive ? 'bg-brand-50 dark:bg-brand-900/40' : ''
+        `relative flex h-9 items-center gap-1 whitespace-nowrap rounded-xl px-2.5 text-sm font-semibold transition ${
+          isActive
+            ? 'bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-200'
+            : 'text-slate-600 ring-1 ring-slate-200 hover:bg-slate-100 dark:text-slate-300 dark:ring-slate-700 dark:hover:bg-slate-800'
         }`
       }
     >
-      🎯
-      {!hasProfile(profile) && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-rose-500" aria-hidden />}
+      🎯 맞춤 공고
+      {!hasProfile(profile) && <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-rose-500" aria-label="프로필 미설정" />}
     </NavLink>
   );
 }

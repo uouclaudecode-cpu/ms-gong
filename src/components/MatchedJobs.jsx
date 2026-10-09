@@ -1,5 +1,5 @@
 // 홈 '🎯 나에게 맞는 공고': 내 프로필(직무·지역·학력·우대)과 맞는 진행 중 공고.
-// 기본은 모든 공공기관에서 찾고, 'My 픽 기업만'으로 좁힐 수 있습니다.
+// 기본은 모든 공공기관에서 찾고, 'My 픽 기업만'으로 좁힐 수 있습니다. 프로필이 없으면 보이지 않습니다.
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { usePicks } from '../context/PickContext.jsx';
@@ -14,21 +14,8 @@ export default function MatchedJobs({ jobs }) {
   const [onlyPicks, setOnlyPicks] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
-  if (!hasProfile(profile)) {
-    return (
-      <Link
-        to="/profile"
-        className="card card-hover flex flex-col items-start gap-3 border-2 border-dashed border-brand-200 p-4 sm:flex-row sm:items-center dark:border-brand-800"
-      >
-        <span className="text-3xl">🎯</span>
-        <div className="flex-1">
-          <p className="font-bold">나에게 맞는 공고 찾기</p>
-          <p className="muted text-sm">희망 직무·지역·학력·우대 조건을 고르면, 맞는 공고를 골라 이유와 함께 보여 드려요.</p>
-        </div>
-        <span className="btn-primary shrink-0">프로필 만들기</span>
-      </Link>
-    );
-  }
+  // 프로필이 없으면 홈에 아무것도 띄우지 않습니다 (오른쪽 위 '🎯 맞춤 공고' 버튼으로 만들 수 있어요)
+  if (!hasProfile(profile)) return null;
 
   const matched = jobs
     .filter((j) => getDday(j.deadline).tone !== 'closed' && passesFilters(j) && (!onlyPicks || picks.includes(j.companyId)))
