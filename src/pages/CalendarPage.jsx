@@ -2,11 +2,11 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import JobCard from '../components/JobCard.jsx';
+import { CAREERS } from '../lib/apply.js';
 import { SkeletonCards } from '../components/Skeleton.jsx';
 import { usePicks } from '../context/PickContext.jsx';
-import { fetchJobs } from '../data/api.js';
-import { COMPANY_BY_ID } from '../data/companies.js';
-import { useAsync } from '../hooks/useAsync.js';
+import { getCompany } from '../data/registry.js';
+import { useJobs } from '../hooks/useJobs.js';
 import { formatKoreanDate, todayKST } from '../lib/dday.js';
 
 const WEEK = ['일', '월', '화', '수', '목', '금', '토'];
@@ -23,20 +23,23 @@ function monthGrid(year, month) {
 }
 
 export default function CalendarPage() {
-  const { picks, hireTypes, saved, isSaved } = usePicks();
+  const { picks, hireTypes, career, saved, isSaved } = usePicks();
   const today = todayKST();
   const [cursor, setCursor] = useState(() => ({ y: +today.slice(0, 4), m: +today.slice(5, 7) - 1 }));
   const [selected, setSelected] = useState(today);
-  const jobs = useAsync(fetchJobs, []);
+  const jobs = useJobs();
 
   // 날짜 → 그날 마감하는 공고들. 찜한 공고는 My 픽 밖이어도 포함합니다.
   const byDate = useMemo(() => {
-    const list = (jobs.data?.items ?? []).filter((j) => picks.includes(j.companyId) && hireTypes.includes(j.type));
+    const careerTest = CAREERS.find((c) => c.key === career).test;
+    const list = (jobs.data?.items ?? []).filter(
+      (j) => picks.includes(j.companyId) && hireTypes.includes(j.type) && careerTest(j),
+    );
     const all = [...list, ...saved.filter((s) => !list.some((j) => j.id === s.id))];
     const map = {};
     for (const j of all) if (j.deadline) (map[j.deadline] ??= []).push(j);
     return map;
-  }, [jobs.data, picks, hireTypes, saved]);
+  }, [jobs.data, picks, hireTypes, career, saved]);
 
   const cells = monthGrid(cursor.y, cursor.m);
   const move = (delta) =>
@@ -137,7 +140,7 @@ export default function CalendarPage() {
                         }`}
                       >
                         {isSaved(j.id) && '★'}
-                        {COMPANY_BY_ID[j.companyId].short}
+                        {getCompany(j.companyId).short}
                       </span>
                     ))}
                     {list.length > 2 && <span className="muted px-1 text-[10px]">+{list.length - 2}</span>}

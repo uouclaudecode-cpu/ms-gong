@@ -1,7 +1,8 @@
-// 공고 카드 한 장: 기업·D-Day·제목·고용형태 + 찜·캘린더 추가 버튼
+// 공고 카드 한 장: 기업·D-Day·NEW·제목·고용형태 + 찜·캘린더 추가 버튼 (+ 찜 목록에서는 지원 단계 선택)
 import { Link } from 'react-router-dom';
 import { usePicks } from '../context/PickContext.jsx';
-import { COMPANY_BY_ID } from '../data/companies.js';
+import { getCompany } from '../data/registry.js';
+import { STAGES, isNewJob, stageOf } from '../lib/apply.js';
 import { formatKoreanDate, getDday } from '../lib/dday.js';
 import { googleCalendarUrl, jobLink } from '../lib/links.js';
 import DdayBadge from './DdayBadge.jsx';
@@ -13,10 +14,12 @@ export const TYPE_COLOR = {
   비정규직: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
 };
 
-export default function JobCard({ job, showCompany = true }) {
-  const { isSaved, toggleSaved } = usePicks();
-  const c = COMPANY_BY_ID[job.companyId];
-  const saved = isSaved(job.id);
+export default function JobCard({ job, showCompany = true, withStatus = false }) {
+  const { saved: savedJobs, toggleSaved, setSavedStatus } = usePicks();
+  const c = getCompany(job.companyId);
+  const savedJob = savedJobs.find((j) => j.id === job.id);
+  const saved = Boolean(savedJob);
+  const stage = savedJob && stageOf(savedJob);
   const closed = getDday(job.deadline).tone === 'closed';
 
   return (
@@ -33,6 +36,9 @@ export default function JobCard({ job, showCompany = true }) {
           <span className="muted text-xs font-semibold">{job.career ?? job.type}</span>
         )}
         <div className="flex shrink-0 items-center gap-1">
+          {isNewJob(job) && (
+            <span className="rounded-lg bg-pick-500 px-1.5 py-0.5 text-[10px] font-black tracking-wide text-white">NEW</span>
+          )}
           <DdayBadge deadline={job.deadline} />
           <button
             type="button"
@@ -64,6 +70,11 @@ export default function JobCard({ job, showCompany = true }) {
         <span className={`rounded-md px-1.5 py-0.5 font-semibold ${TYPE_COLOR[job.type] ?? TYPE_COLOR.비정규직}`}>{job.type}</span>
         {showCompany && job.career && <span>{job.career}</span>}
         {job.headcount && <span>{job.headcount}</span>}
+        {saved && !withStatus && stage.key !== 'planned' && (
+          <span className={`rounded-md px-1.5 py-0.5 font-semibold ${stage.color}`}>
+            {stage.icon} {stage.label}
+          </span>
+        )}
         <span className="ml-auto flex items-center gap-2">
           {job.deadline ? `~ ${formatKoreanDate(job.deadline)}` : '상시 모집'}
           {job.deadline && !closed && (
@@ -79,6 +90,23 @@ export default function JobCard({ job, showCompany = true }) {
           )}
         </span>
       </div>
+
+      {withStatus && saved && (
+        <label className="flex items-center gap-2 border-t border-slate-100 pt-2 text-xs dark:border-slate-800">
+          <span className="muted shrink-0 font-semibold">지원 현황</span>
+          <select
+            value={stage.key}
+            onChange={(e) => setSavedStatus(job.id, e.target.value)}
+            className={`flex-1 cursor-pointer rounded-lg border-0 px-2 py-1.5 text-xs font-semibold outline-none ring-1 ring-inset ring-black/5 ${stage.color}`}
+          >
+            {STAGES.map((s) => (
+              <option key={s.key} value={s.key}>
+                {s.icon} {s.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
     </li>
   );
 }

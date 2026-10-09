@@ -12,17 +12,33 @@ async function getJson(url) {
 
 async function withFallback(url, fallback) {
   try {
-    const { items } = await getJson(url);
-    return { items, live: true };
+    const body = await getJson(url);
+    return { ...body, live: true };
   } catch (err) {
     if (err.code !== 'no_key') console.warn(`[api] ${url} 실패, 예시 데이터로 대신합니다:`, err.message);
     return { items: fallback(), live: false, reason: err.code === 'no_key' ? 'no_key' : 'error' };
   }
 }
 
-export function fetchJobs() {
-  return withFallback('/api/jobs', () => MOCK_JOBS);
+/** 같은 방문 중에 여러 화면이 같은 데이터를 다시 받지 않도록 잠깐 기억합니다 */
+function memo(fn, ms) {
+  const store = new Map();
+  return (...args) => {
+    const key = JSON.stringify(args);
+    const hit = store.get(key);
+    if (hit && Date.now() - hit.at < ms) return hit.promise;
+    const promise = fn(...args);
+    store.set(key, { at: Date.now(), promise });
+    promise.then((r) => r.live === false && store.delete(key)); // 실패한 건 다음에 다시 시도
+    return promise;
+  };
 }
+
+/** 진행 중 공고 전체. institutions: 우리 목록 밖 기관 [{ id, code, name }] */
+export const fetchJobs = memo(() => withFallback('/api/jobs', () => MOCK_JOBS), 5 * 60000);
+
+/** 우리 목록 밖, 최근 공고를 낸 공공기관 목록 */
+export const fetchInstitutions = memo(() => withFallback('/api/institutions', () => []), 30 * 60000);
 
 /**
  * ids: 기업 id 배열. 기업마다 따로 불러 합칩니다(기업별 주소라 CDN 캐시를 모든 방문자가 같이 씀).
@@ -45,3 +61,21 @@ export async function fetchNews(ids) {
 export function fetchBlog(companyId, kw) {
   return withFallback(`/api/blog?company=${companyId}&kw=${kw}`, () => MOCK_BLOG(companyId, kw));
 }
+
+/** 최근 3년 채용 흐름. 키가 없으면 { live: false } */
+export async function fetchTrend(companyId) {
+  try {
+    return { ...(await getJson(`/api/trend?id=${companyId}`)), live: true };
+  } catch (err) {
+    return { live: false, available: false, reason: err.code === 'no_key' ? 'no_key' : 'error' };
+  }
+}
+
+/** 기관별 신입 초임·평균보수·직원 수 (ALIO 공시, 사이트에 들어 있는 파일) */
+export const fetchCompanyInfo = memo(async () => {
+  try {
+    return { ...(await getJson('/data/company-info.json')), live: true };
+  } catch {
+    return { items: {}, live: false };
+  }
+}, 60 * 60000);

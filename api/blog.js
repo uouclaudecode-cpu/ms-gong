@@ -1,15 +1,15 @@
 // GET /api/blog?company=kepco&kw=review → 네이버 블로그 글 목록
 import { BLOG_KEYWORDS } from '../src/lib/links.js';
-import { cache, cleanText, COMPANY_BY_ID, fail, mentions, noKey } from './_lib/util.js';
+import { cache, cleanText, fail, mentions, noKey, resolveCompany } from './_lib/util.js';
 import { hasNaverKey, naverSearch } from './_lib/naver.js';
 
 export default async function handler(req, res) {
-  const company = COMPANY_BY_ID[req.query.company];
   const kw = BLOG_KEYWORDS.find((k) => k.key === req.query.kw) ?? BLOG_KEYWORDS[0];
-  if (!company) return res.status(400).json({ error: 'bad_company' });
   if (!hasNaverKey()) return noKey(res, 'NAVER_CLIENT_ID/NAVER_CLIENT_SECRET');
 
   try {
+    const company = await resolveCompany(req.query.company);
+    if (!company) return res.status(400).json({ error: 'bad_company' });
     // 넉넉히 받아서 기업명이 들어간 글만 10개 남깁니다
     const items = (await naverSearch('blog', `${company.name} ${kw.query}`, { display: 50, sort: 'sim' }))
       .filter((it) => mentions(company, cleanText(`${it.title} ${it.description}`)))

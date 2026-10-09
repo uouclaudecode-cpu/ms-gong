@@ -1,6 +1,6 @@
 // 선택한 기업 관련 뉴스 (최근 6개월) + 기간·주제 필터
 import { useState } from 'react';
-import { COMPANY_BY_ID } from '../data/companies.js';
+import { getCompany } from '../data/registry.js';
 import DataStatus from './DataStatus.jsx';
 
 const TOPICS = ['전체', '이슈', '경영평가', '정책', '채용'];
@@ -90,7 +90,7 @@ export default function NewsList({ result, companyIds, limit = PAGE }) {
             <a href={n.url} target="_blank" rel="noreferrer" className="block p-3.5 transition hover:bg-slate-50 dark:hover:bg-slate-800/50">
               <div className="mb-1 flex items-center gap-1.5 text-xs">
                 <span className={`rounded px-1.5 py-0.5 font-semibold ${TOPIC_COLOR[n.topic]}`}>{n.topic}</span>
-                <span className="font-medium text-slate-600 dark:text-slate-300">{COMPANY_BY_ID[n.companyId].short}</span>
+                <span className="font-medium text-slate-600 dark:text-slate-300">{getCompany(n.companyId).short}</span>
                 <span className="ml-auto shrink-0 text-slate-400">{when(n.publishedAt)}</span>
               </div>
               <p className="line-clamp-2 text-sm font-semibold leading-snug text-slate-800 dark:text-slate-100">{n.title}</p>

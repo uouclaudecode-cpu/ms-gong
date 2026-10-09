@@ -1,23 +1,26 @@
-// 기업 상세: 공고 + 뉴스 + 네이버 블로그 후기
+// 기업 상세: 기관 정보 + 공고 + 뉴스 + 채용 트렌드 + 네이버 블로그 후기
 import { useEffect } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import BlogPosts from '../components/BlogPosts.jsx';
+import CompanyInfo from '../components/CompanyInfo.jsx';
+import HiringTrend from '../components/HiringTrend.jsx';
 import JobTimeline from '../components/JobTimeline.jsx';
 import NewsList from '../components/NewsList.jsx';
 import { SkeletonCards } from '../components/Skeleton.jsx';
 import { usePicks } from '../context/PickContext.jsx';
-import { fetchJobs, fetchNews } from '../data/api.js';
-import { COMPANY_BY_ID } from '../data/companies.js';
+import { fetchNews } from '../data/api.js';
+import { getCompany } from '../data/registry.js';
 import { useAsync } from '../hooks/useAsync.js';
+import { useJobs } from '../hooks/useJobs.js';
 import { naverNewsSearchUrl } from '../lib/links.js';
 import NotFoundPage from './NotFoundPage.jsx';
 
 export default function CompanyPage() {
   const { id } = useParams();
   const { hash } = useLocation();
-  const company = COMPANY_BY_ID[id];
+  const company = getCompany(id);
   const { isPicked, toggle } = usePicks();
-  const jobs = useAsync(fetchJobs, []);
+  const jobs = useJobs();
   const news = useAsync(() => fetchNews([id]), [id]);
 
   // 카드의 '블로그 후기 보기'로 들어오면 #blog 위치로.
@@ -45,9 +48,7 @@ export default function CompanyPage() {
           </span>
           <div className="flex-1">
             <h1 className="text-2xl font-black tracking-tight">{company.name}</h1>
-            <p className="muted text-sm">
-              {company.sector} · 본사 {company.hq}
-            </p>
+            <p className="muted text-sm">{company.hq ? `${company.sector} · 본사 ${company.hq}` : company.sector}</p>
           </div>
           <div className="flex gap-2">
             <a href={naverNewsSearchUrl(company.name)} target="_blank" rel="noreferrer" className="btn-ghost">
@@ -62,14 +63,19 @@ export default function CompanyPage() {
             </button>
           </div>
         </header>
+        <CompanyInfo company={company} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="min-w-0 lg:col-span-2">
           {jobs.loading ? <SkeletonCards count={2} /> : <JobTimeline result={jobs.data} companyIds={[id]} showCompany={false} />}
         </div>
-        {news.loading ? <SkeletonCards count={3} className="space-y-3" /> : <NewsList result={news.data} companyIds={[id]} />}
+        <div className="min-w-0">
+          {news.loading ? <SkeletonCards count={3} className="space-y-3" /> : <NewsList result={news.data} companyIds={[id]} />}
+        </div>
       </div>
+
+      <HiringTrend company={company} />
 
       <BlogPosts company={company} />
     </div>

@@ -3,13 +3,16 @@
 // 마감일은 오늘 기준 상대값으로 만들어서 언제 열어도 D-Day가 자연스럽게 보입니다.
 import { addDays } from '../lib/dday.js';
 import { BLOG_KEYWORDS, naverBlogSearchUrl, naverNewsSearchUrl, JOB_ALIO_URL } from '../lib/links.js';
-import { COMPANY_BY_ID } from './companies.js';
+import { getCompany } from './registry.js';
 
 const job = (id, companyId, title, type, offset, extra = {}) => ({
   id,
   companyId,
   title,
   type, // '정규직' | '인턴' | '무기계약직' | '비정규직'
+  career: '신입',
+  // 마감이 가까운 공고는 오래전에, 먼 공고는 최근에 올라온 것처럼 (마감 14일 넘게 남으면 '새 공고')
+  startsAt: addDays(offset === null || offset > 14 ? 0 : -10),
   deadline: offset === null ? null : addDays(offset),
   url: JOB_ALIO_URL,
   isSample: true,
@@ -44,7 +47,7 @@ const news = (id, companyId, topic, title, daysAgo) => ({
   publishedAt: addDays(-daysAgo),
   press: '예시',
   // 예시 기사 대신 해당 기업의 실제 최신 뉴스 검색으로 연결합니다.
-  url: naverNewsSearchUrl(COMPANY_BY_ID[companyId].name),
+  url: naverNewsSearchUrl(getCompany(companyId).name),
   isSample: true,
 });
 
@@ -69,7 +72,7 @@ export const MOCK_NEWS = [
 
 // 블로그 예시: 가짜 글 대신 실제 네이버 블로그 검색 결과로 연결합니다.
 export const MOCK_BLOG = (companyId, kw) => {
-  const c = COMPANY_BY_ID[companyId];
+  const c = getCompany(companyId);
   const k = BLOG_KEYWORDS.find((x) => x.key === kw) ?? BLOG_KEYWORDS[0];
   return [1, 2, 3].map((i) => ({
     title: `(예시) ${c.short} ${k.label} 글 ${i}`,

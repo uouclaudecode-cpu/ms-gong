@@ -1,11 +1,13 @@
-// 사용자 설정 전역 상태: My 픽 공기업 · 보고 싶은 고용형태 · 찜한 공고 · 화면 테마.
+// 사용자 설정 전역 상태: My 픽 공기업 · 보고 싶은 고용형태·신입/경력 · 찜한 공고(지원 현황) · 화면 테마.
 // 로그인이 없으므로 전부 이 브라우저 localStorage에 저장합니다.
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { COMPANY_BY_ID } from '../data/companies.js';
+import { isKnownCompanyId, registerInstitutions } from '../data/registry.js';
+import { CAREERS, STAGE_BY_KEY } from '../lib/apply.js';
 
 const KEYS = {
   picks: 'ms-gong:picks',
   hire: 'ms-gong:hire-types',
+  career: 'ms-gong:career',
   saved: 'ms-gong:saved-jobs',
   theme: 'ms-gong:theme',
 };
@@ -38,18 +40,25 @@ function initialTheme() {
 }
 
 export function PickProvider({ children }) {
-  // 목록에서 빠진 기업 id는 버립니다.
-  const [picks, setPicks] = useState(() => arr(load(KEYS.picks, [])).filter((id) => COMPANY_BY_ID[id]));
+  // 알 수 없는 id(목록에서 빠진 기업 등)는 버립니다. 그 밖의 공공기관('x-C0008')은 그대로 둡니다.
+  const [picks, setPicks] = useState(() => arr(load(KEYS.picks, [])).filter(isKnownCompanyId));
   const [hireTypes, setHireTypes] = useState(() => {
     const v = load(KEYS.hire, null);
     return Array.isArray(v) ? v.filter((t) => HIRE_TYPES.includes(t)) : DEFAULT_HIRE;
   });
+  const [career, setCareer] = useState(() => {
+    const v = load(KEYS.career, 'new');
+    return CAREERS.some((c) => c.key === v) ? v : 'new';
+  });
   // 공고가 마감돼 목록에서 사라져도 찜 목록에는 남도록 공고 정보를 통째로 저장합니다.
-  const [saved, setSaved] = useState(() => arr(load(KEYS.saved, [])).filter((j) => j?.id && COMPANY_BY_ID[j.companyId]));
+  const [saved, setSaved] = useState(() => arr(load(KEYS.saved, [])).filter((j) => j?.id && isKnownCompanyId(j.companyId)));
   const [theme, setTheme] = useState(initialTheme);
+  // 그 밖의 공공기관 이름을 새로 알게 되면 화면을 다시 그리게 하는 숫자
+  const [institutionsVersion, setInstitutionsVersion] = useState(0);
 
   useEffect(() => save(KEYS.picks, picks), [picks]);
   useEffect(() => save(KEYS.hire, hireTypes), [hireTypes]);
+  useEffect(() => save(KEYS.career, career), [career]);
   useEffect(() => save(KEYS.saved, saved), [saved]);
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
@@ -66,19 +75,27 @@ export function PickProvider({ children }) {
     setSaved((prev) =>
       prev.some((j) => j.id === job.id)
         ? prev.filter((j) => j.id !== job.id)
-        : [...prev, { ...job, savedAt: new Date().toISOString() }],
+        : [...prev, { ...job, status: 'planned', savedAt: new Date().toISOString() }],
     );
   }, []);
+  const setSavedStatus = useCallback((id, status) => {
+    if (!STAGE_BY_KEY[status]) return;
+    setSaved((prev) => prev.map((j) => (j.id === id ? { ...j, status, statusAt: new Date().toISOString() } : j)));
+  }, []);
   const toggleTheme = useCallback(() => setTheme((t) => (t === 'dark' ? 'light' : 'dark')), []);
+  const addInstitutions = useCallback((list) => {
+    if (registerInstitutions(list)) setInstitutionsVersion((v) => v + 1);
+  }, []);
 
   const value = useMemo(
     () => ({
       picks, toggle, isPicked, clear, setPicks,
-      hireTypes, toggleHireType,
-      saved, isSaved, toggleSaved,
+      hireTypes, toggleHireType, career, setCareer,
+      saved, isSaved, toggleSaved, setSavedStatus,
       theme, toggleTheme,
+      institutionsVersion, addInstitutions,
     }),
-    [picks, toggle, isPicked, clear, hireTypes, toggleHireType, saved, isSaved, toggleSaved, theme, toggleTheme],
+    [picks, toggle, isPicked, clear, hireTypes, toggleHireType, career, saved, isSaved, toggleSaved, setSavedStatus, theme, toggleTheme, institutionsVersion, addInstitutions],
   );
   return <PickContext.Provider value={value}>{children}</PickContext.Provider>;
 }

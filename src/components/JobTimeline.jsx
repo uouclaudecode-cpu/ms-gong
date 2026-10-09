@@ -1,7 +1,8 @@
-// 채용 공고 목록 (마감 임박 순) + 고용형태·지역·검색 필터. 마감 지난 공고는 기본으로 숨깁니다.
+// 채용 공고 목록 (마감 임박 순) + 신입/경력·고용형태·새 공고·지역·검색 필터. 마감 지난 공고는 기본으로 숨깁니다.
 import { useMemo, useState } from 'react';
 import { HIRE_TYPES, usePicks } from '../context/PickContext.jsx';
-import { COMPANY_BY_ID } from '../data/companies.js';
+import { getCompany } from '../data/registry.js';
+import { CAREERS, isNewJob } from '../lib/apply.js';
 import { byDeadline, getDday } from '../lib/dday.js';
 import { JOB_ALIO_URL } from '../lib/links.js';
 import DataStatus from './DataStatus.jsx';
@@ -33,9 +34,34 @@ function HireTypeFilter({ counts }) {
   );
 }
 
+function CareerFilter({ counts }) {
+  const { career, setCareer } = usePicks();
+  return (
+    <div className="flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800/70" role="tablist" aria-label="신입·경력">
+      {CAREERS.map((c) => (
+        <button
+          key={c.key}
+          type="button"
+          role="tab"
+          aria-selected={career === c.key}
+          onClick={() => setCareer(c.key)}
+          className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+            career === c.key
+              ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-white'
+              : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'
+          }`}
+        >
+          {c.label} <span className="opacity-60">{counts[c.key] ?? 0}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function JobTimeline({ result, companyIds, showCompany = true, title = '📅 채용 공고' }) {
-  const { hireTypes } = usePicks();
+  const { hireTypes, career } = usePicks();
   const [showClosed, setShowClosed] = useState(false);
+  const [onlyNew, setOnlyNew] = useState(false);
   const [query, setQuery] = useState('');
   const [region, setRegion] = useState('');
 
@@ -45,16 +71,25 @@ export default function JobTimeline({ result, companyIds, showCompany = true, ti
   );
   const regions = useMemo(() => [...new Set(mine.flatMap(regionsOf))].sort(), [mine]);
 
+  // 숫자는 진행 중 공고 기준. 고용형태 수는 신입/경력 필터를, 신입/경력 수는 고용형태 필터를 따릅니다
+  const careerTest = CAREERS.find((c) => c.key === career).test;
+  const open = mine.filter(isOpen);
   const counts = {};
-  for (const j of mine) if (isOpen(j)) counts[j.type] = (counts[j.type] ?? 0) + 1;
+  for (const j of open.filter(careerTest)) counts[j.type] = (counts[j.type] ?? 0) + 1;
+  const careerCounts = Object.fromEntries(
+    CAREERS.map((c) => [c.key, open.filter((j) => hireTypes.includes(j.type) && c.test(j)).length]),
+  );
+  const newCount = open.filter((j) => hireTypes.includes(j.type) && careerTest(j) && isNewJob(j)).length;
 
   const q = query.trim().replace(/\s/g, '');
   const filtered = mine
     .filter((j) => hireTypes.includes(j.type))
+    .filter(careerTest)
+    .filter((j) => !onlyNew || isNewJob(j))
     .filter((j) => !region || regionsOf(j).includes(region))
     .filter((j) => {
       if (!q) return true;
-      const hay = `${j.title}${j.fields ?? ''}${j.region ?? ''}${COMPANY_BY_ID[j.companyId].name}`.replace(/\s/g, '');
+      const hay = `${j.title}${j.fields ?? ''}${j.region ?? ''}${getCompany(j.companyId).name}`.replace(/\s/g, '');
       return hay.includes(q);
     })
     .sort(byDeadline);
@@ -94,7 +129,18 @@ export default function JobTimeline({ result, companyIds, showCompany = true, ti
         )}
       </div>
 
+      <CareerFilter counts={careerCounts} />
+
       <div className="no-scrollbar -mx-4 flex gap-1.5 overflow-x-auto px-4">
+        <button
+          type="button"
+          aria-pressed={onlyNew}
+          onClick={() => setOnlyNew((v) => !v)}
+          className={`chip flex items-center gap-1 !py-1 text-xs ${onlyNew ? '!bg-pick-500 !text-white !ring-pick-500' : ''}`}
+        >
+          🆕 새 공고 <span className="opacity-70">{newCount}</span>
+        </button>
+        <span className="w-px shrink-0 bg-slate-200 dark:bg-slate-700" aria-hidden />
         <HireTypeFilter counts={counts} />
       </div>
 
@@ -103,7 +149,7 @@ export default function JobTimeline({ result, companyIds, showCompany = true, ti
           <p>
             {!hireTypes.length
               ? '위에서 고용형태를 하나 이상 골라 주세요.'
-              : q || region
+              : q || region || onlyNew
                 ? '조건에 맞는 공고가 없어요.'
                 : '선택한 고용형태로 진행 중인 공고가 없어요.'}
           </p>

@@ -15,9 +15,7 @@ export default function CompanyCard({ company, jobs }) {
         </span>
         <div className="min-w-0">
           <h3 className="truncate font-bold group-hover:text-brand-600 dark:group-hover:text-brand-300">{company.name}</h3>
-          <p className="muted text-xs">
-            {company.sector} · {company.hq}
-          </p>
+          <p className="muted text-xs">{company.hq ? `${company.sector} · ${company.hq}` : company.sector}</p>
         </div>
         <span className="ml-auto text-slate-300 group-hover:text-brand-500">›</span>
       </Link>

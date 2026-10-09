@@ -1,6 +1,6 @@
 // GET /api/news?id=kepco → 그 기업의 최근 6개월 뉴스(네이버 뉴스 검색), 최신순
 // 화면은 기업마다 따로 불러서 합칩니다. 주소가 기업별로 같아서 CDN 캐시를 모든 방문자가 같이 씁니다.
-import { cache, cleanText, COMPANY_BY_ID, fail, mentions, noKey } from './_lib/util.js';
+import { cache, cleanText, fail, mentions, noKey, resolveCompany } from './_lib/util.js';
 import { hasNaverKey, naverSearch } from './_lib/naver.js';
 
 // 제목·요약에 들어간 단어로 주제를 대략 나눕니다. 위에 있는 규칙이 우선.
@@ -33,8 +33,8 @@ function recentMonths(n) {
   });
 }
 
-async function newsFor(id) {
-  const c = COMPANY_BY_ID[id];
+async function newsFor(c) {
+  const id = c.id;
   const months = recentMonths(MONTHS);
   const since = Date.now() - DAYS * 86400000;
 
@@ -79,13 +79,16 @@ async function newsFor(id) {
   );
 }
 
+// 외부 API를 여러 번 부르므로 넉넉히 (Vercel 기본 제한보다 길게)
+export const config = { maxDuration: 60 };
+
 export default async function handler(req, res) {
-  const company = COMPANY_BY_ID[req.query.id];
-  if (!company) return res.status(400).json({ error: 'bad_company' });
   if (!hasNaverKey()) return noKey(res, 'NAVER_CLIENT_ID/NAVER_CLIENT_SECRET');
 
   try {
-    const items = (await newsFor(company.id)).sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+    const company = await resolveCompany(req.query.id);
+    if (!company) return res.status(400).json({ error: 'bad_company' });
+    const items = (await newsFor(company)).sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
     cache(res, 3600); // 1시간 (기업당 네이버 호출 8번)
     res.status(200).json({ items });
   } catch (err) {

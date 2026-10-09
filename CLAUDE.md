@@ -6,14 +6,22 @@ Vite 5 + React 18 + React Router 6 + Tailwind 3 (로컬 Node 18이라 이 버전
 
 ## 구조
 - `api/*.js` Vercel 서버 함수. 외부 API 키는 여기서만 씀(브라우저로 보내지 않음). 결과는 CDN 캐시
-  - `/api/jobs` 잡알리오(공공데이터포털 `apis.data.go.kr/1051000/recruitment/list`) 진행 중 공고 → 기관명으로 거름
+  - `/api/jobs` 잡알리오(공공데이터포털 `apis.data.go.kr/1051000/recruitment/list`) 진행 중 공고 전체. 우리 목록 기업은 그 id, 나머지 기관은 `x-기관코드`(예: `x-C0021`) + `institutions`
+  - `/api/institutions` 최근 공고를 낸 목록 밖 공공기관(진행 중 + 최근 마감 1,500건에서 모음, 하루 캐시)
+  - `/api/trend?id=` 기관코드(`pblntInstCd`)로 최근 3년 공고 → 연도별·달별(정규직·인턴)·최근 공고. 최대 1,500건(`partial`)
+  - 잡알리오 호출은 `api/_lib/util.js`의 `alioList()`(재시도 포함). 개발계정 하루 1,000회 한도를 의식해 캐시를 길게 둠
+  - 목록 밖 기관 id는 `resolveCompany()`가 잡알리오에서 이름을 확인(아무 검색어 대리 검색 방지)
   - `/api/news?id=kepco` 기업별 최근 6개월 뉴스(최신순 + "기업명 2026년 7월" 달별 검색으로 과거를 채움, 달마다 최대 12개). 화면은 기업마다 따로 불러 합침. 네이버 뉴스 검색(NAVER API HUB `naverapihub.apigw.ntruss.com`, 헤더 `X-NCP-APIGW-API-KEY-ID/KEY`), 주제(채용·경영평가·정책·이슈)는 단어 규칙으로 분류
   - `/api/blog?company=kepco&kw=review` 네이버 블로그 검색 (키워드는 `src/lib/links.js`의 `BLOG_KEYWORDS`)
   - 로컬 `npm run dev`에서는 `vite.config.js`의 `localApi` 플러그인이 같은 함수를 실행
 - `src/data/api.js` 화면이 데이터를 가져오는 유일한 곳. 키가 없거나 실패하면 `mock.js` 예시로 대신하고 `live: false`
 - `src/data/companies.js` 기업 목록. `id`는 URL·localStorage에 쓰이므로 바꾸지 않음.
-  `name`은 잡알리오 기관명과 같아야 공고가 매칭됨
-- `src/context/PickContext.jsx` 전역 상태 + localStorage: My 픽(`ms-gong:picks`), 고용형태(`ms-gong:hire-types`), 찜한 공고(`ms-gong:saved-jobs`, 공고 객체 통째로), 테마(`ms-gong:theme`)
+  `name`은 잡알리오 기관명과 같아야 공고가 매칭됨. `code`=잡알리오 기관코드, `excludes`=자회사 이름(뉴스·블로그 오인식 방지)
+- 화면에서 기업 찾기는 `src/data/registry.js`의 `getCompany(id)` (목록 + 목록 밖 기관). `COMPANY_BY_ID`를 화면에서 직접 쓰지 않음
+- 기업명 언급 판별 `mentions()`(api/_lib/util.js): 자회사·뒤에 영문(한전KPS)·약칭 앞 한글(인천국제공항공사)을 거름
+- 기관 정보(신입 초임·평균보수·정규직 수)는 `public/data/company-info.json`. `npm run company-info`로 ALIO 통계에서 새로 받음(1년에 한 번쯤)
+- 지원 현황 단계·새 공고·신입/경력 규칙은 `src/lib/apply.js`
+- `src/context/PickContext.jsx` 전역 상태 + localStorage: My 픽(`ms-gong:picks`), 고용형태(`ms-gong:hire-types`), 신입/경력(`ms-gong:career`), 찜한 공고(`ms-gong:saved-jobs`, 공고 객체 통째로 + `status` 지원 단계), 목록 밖 기관 이름(`ms-gong:institutions`), 테마(`ms-gong:theme`)
 - 잡알리오 공고 링크는 `jobLink()`(src/lib/links.js)로: 휴대폰이면 모바일 공고 페이지(`/mobile2021/recruit/recruitView.do?idx=`). PC 주소는 휴대폰에서 모바일 첫 화면으로 튕김
 - 라우트: `/` 홈(`?c=기업id` 필터, `?picks=a,b` 공유받은 픽), `/calendar`, `/saved`, `/pick`, `/company/:id`(`#blog`)
 - 디자인: Tailwind `darkMode: class`. 공통 모양은 `src/index.css`의 `.card` `.chip` `.btn-primary` 등을 씀. 색은 `brand`(보라)·`pick`(민트)

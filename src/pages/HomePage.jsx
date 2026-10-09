@@ -11,9 +11,11 @@ import NewsList from '../components/NewsList.jsx';
 import PickFilterBar from '../components/PickFilterBar.jsx';
 import { SkeletonCards } from '../components/Skeleton.jsx';
 import { usePicks } from '../context/PickContext.jsx';
-import { fetchJobs, fetchNews } from '../data/api.js';
-import { COMPANY_BY_ID } from '../data/companies.js';
+import { fetchNews } from '../data/api.js';
+import { getCompany } from '../data/registry.js';
 import { useAsync } from '../hooks/useAsync.js';
+import { useJobs } from '../hooks/useJobs.js';
+import { CAREERS, isNewJob, stageOf } from '../lib/apply.js';
 import { byDeadline, formatKoreanDate, getDday, todayKST } from '../lib/dday.js';
 import { jobLink } from '../lib/links.js';
 
@@ -22,7 +24,7 @@ function SharedPicksBanner({ ids, onApply, onDismiss }) {
     <div className="card flex flex-col gap-3 p-4 ring-2 ring-brand-300 sm:flex-row sm:items-center dark:ring-brand-700">
       <div className="flex-1">
         <p className="text-sm font-bold">🔗 친구가 공유한 My 픽이에요</p>
-        <p className="muted mt-0.5 text-sm">{ids.map((id) => COMPANY_BY_ID[id].short).join(' · ')}</p>
+        <p className="muted mt-0.5 text-sm">{ids.map((id) => getCompany(id).short).join(' · ')}</p>
       </div>
       <div className="flex gap-2">
         <button type="button" onClick={onDismiss} className="btn-ghost">
@@ -81,12 +83,12 @@ function Stat({ label, value, tone = '', sub }) {
 }
 
 export default function HomePage() {
-  const { picks, setPicks, hireTypes, saved } = usePicks();
+  const { picks, setPicks, hireTypes, career, saved } = usePicks();
   const [params, setParams] = useSearchParams();
-  const jobsState = useAsync(fetchJobs, []);
+  const jobsState = useJobs();
   const newsState = useAsync(() => (picks.length ? fetchNews(picks) : Promise.resolve(null)), [picks.join(',')]);
 
-  const shared = (params.get('picks') ?? '').split(',').filter((id) => COMPANY_BY_ID[id]);
+  const shared = (params.get('picks') ?? '').split(',').filter((id) => getCompany(id));
   const dropShared = () => {
     params.delete('picks');
     setParams(params, { replace: true });
@@ -117,14 +119,16 @@ export default function HomePage() {
   const scope = active === 'all' ? picks : [active];
   const setActive = (id) => setParams(id === 'all' ? {} : { c: id }, { replace: true });
 
-  // 통계·카드도 공고 목록과 같은 고용형태 필터를 따릅니다
-  const allJobs = (jobsState.data?.items ?? []).filter((j) => hireTypes.includes(j.type));
+  // 통계·카드도 공고 목록과 같은 고용형태·신입/경력 필터를 따릅니다
+  const careerOpt = CAREERS.find((c) => c.key === career);
+  const allJobs = (jobsState.data?.items ?? []).filter((j) => hireTypes.includes(j.type) && careerOpt.test(j));
   const openJobs = allJobs
     .filter((j) => scope.includes(j.companyId) && getDday(j.deadline).tone !== 'closed')
     .sort(byDeadline);
   const urgent = openJobs.filter((j) => ['urgent', 'soon'].includes(getDday(j.deadline).tone));
   const next = openJobs.find((j) => j.deadline);
-  const savedOpen = saved.filter((j) => getDday(j.deadline).tone !== 'closed');
+  const newJobs = openJobs.filter((j) => isNewJob(j));
+  const applying = saved.filter((j) => !['planned', 'final', 'rejected'].includes(stageOf(j).key));
 
   return (
     <div className="space-y-6">
@@ -142,20 +146,21 @@ export default function HomePage() {
 
       <PickFilterBar picks={picks} active={active} onChange={setActive} />
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat
           label="진행 중 공고"
           value={jobsState.loading ? '–' : openJobs.length}
           tone="text-brand-600 dark:text-brand-300"
-          sub={hireTypes.join('·') || '고용형태 미선택'}
+          sub={`${careerOpt.label} · ${hireTypes.join('·') || '고용형태 미선택'}`}
         />
+        <Stat label="🆕 새 공고" value={jobsState.loading ? '–' : newJobs.length} tone={newJobs.length ? 'text-pick-500' : ''} sub="어제·오늘 올라옴" />
         <Stat
           label="7일 내 마감"
           value={jobsState.loading ? '–' : urgent.length}
           tone={urgent.length ? 'text-rose-600 dark:text-rose-400' : ''}
         />
         <Link to="/saved" className="contents">
-          <Stat label="⭐ 찜한 공고" value={savedOpen.length} sub="찜 목록 보기 ›" />
+          <Stat label="📋 지원 진행 중" value={applying.length} sub={`찜 ${saved.length}개 · 현황 보기 ›`} />
         </Link>
       </div>
 
@@ -169,7 +174,7 @@ export default function HomePage() {
           <span className="text-xl">⏰</span>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold text-rose-700 dark:text-rose-300">
-              가장 먼저 마감 · {COMPANY_BY_ID[next.companyId].name}
+              가장 먼저 마감 · {getCompany(next.companyId).name}
             </p>
             <p className="truncate text-sm font-bold">{next.title}</p>
           </div>
@@ -199,7 +204,7 @@ export default function HomePage() {
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {scope.map((id) => (
-            <CompanyCard key={id} company={COMPANY_BY_ID[id]} jobs={allJobs.filter((j) => j.companyId === id)} />
+            <CompanyCard key={id} company={getCompany(id)} jobs={allJobs.filter((j) => j.companyId === id)} />
           ))}
         </div>
       </section>
