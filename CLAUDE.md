@@ -14,6 +14,7 @@ Vite 5 + React 18 + React Router 6 + Tailwind 3 (로컬 Node 18이라 이 버전
 - `src/data/companies.js` 기업 목록. `id`는 URL·localStorage에 쓰이므로 바꾸지 않음.
   `name`은 잡알리오 기관명과 같아야 공고가 매칭됨
 - `src/context/PickContext.jsx` 전역 상태 + localStorage: My 픽(`ms-gong:picks`), 고용형태(`ms-gong:hire-types`), 찜한 공고(`ms-gong:saved-jobs`, 공고 객체 통째로), 테마(`ms-gong:theme`)
+- 잡알리오 공고 링크는 `jobLink()`(src/lib/links.js)로: 휴대폰이면 모바일 공고 페이지(`/mobile2021/recruit/recruitView.do?idx=`). PC 주소는 휴대폰에서 모바일 첫 화면으로 튕김
 - 라우트: `/` 홈(`?c=기업id` 필터, `?picks=a,b` 공유받은 픽), `/calendar`, `/saved`, `/pick`, `/company/:id`(`#blog`)
 - 디자인: Tailwind `darkMode: class`. 공통 모양은 `src/index.css`의 `.card` `.chip` `.btn-primary` 등을 씀. 색은 `brand`(보라)·`pick`(민트)
 

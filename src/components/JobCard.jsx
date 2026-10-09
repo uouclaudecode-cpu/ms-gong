@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { usePicks } from '../context/PickContext.jsx';
 import { COMPANY_BY_ID } from '../data/companies.js';
 import { formatKoreanDate, getDday } from '../lib/dday.js';
-import { googleCalendarUrl } from '../lib/links.js';
+import { googleCalendarUrl, jobLink } from '../lib/links.js';
 import DdayBadge from './DdayBadge.jsx';
 
 export const TYPE_COLOR = {
@@ -49,7 +49,7 @@ export default function JobCard({ job, showCompany = true }) {
       </div>
 
       <a
-        href={job.url}
+        href={jobLink(job)}
         target="_blank"
         rel="noreferrer"
         className="line-clamp-2 font-semibold leading-snug text-slate-900 hover:underline dark:text-slate-100"

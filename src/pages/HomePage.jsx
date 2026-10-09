@@ -15,6 +15,7 @@ import { fetchJobs, fetchNews } from '../data/api.js';
 import { COMPANY_BY_ID } from '../data/companies.js';
 import { useAsync } from '../hooks/useAsync.js';
 import { byDeadline, formatKoreanDate, getDday, todayKST } from '../lib/dday.js';
+import { jobLink } from '../lib/links.js';
 
 function SharedPicksBanner({ ids, onApply, onDismiss }) {
   return (
@@ -160,7 +161,7 @@ export default function HomePage() {
 
       {next && (
         <a
-          href={next.url}
+          href={jobLink(next)}
           target="_blank"
           rel="noreferrer"
           className="flex items-center gap-3 rounded-2xl bg-rose-50 px-4 py-3 ring-1 ring-rose-100 transition hover:bg-rose-100 dark:bg-rose-500/10 dark:ring-rose-500/20 dark:hover:bg-rose-500/15"
