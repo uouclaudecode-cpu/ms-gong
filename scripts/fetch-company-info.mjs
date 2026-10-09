@@ -16,7 +16,7 @@ async function fetchItem({ reportFormNo, itemNo }) {
   const rows = [];
   for (let page = 1; page <= 10; page++) {
     const qs = new URLSearchParams({ pageNo: String(page), countPerPage: '100', reportFormNo, itemNo });
-    const r = await fetch(`${BASE}?${qs}`, { headers: { 'User-Agent': 'MS-PICK data script (ms-gong.vercel.app)' } });
+    const r = await fetch(`${BASE}?${qs}`, { headers: { 'User-Agent': 'MS-PICK data script (ms-pick.vercel.app)' } });
     if (!r.ok) throw new Error(`ALIO ${itemNo} ${r.status}`);
     const { data } = await r.json();
     rows.push(...data.result);

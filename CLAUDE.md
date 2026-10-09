@@ -2,7 +2,8 @@
 
 MS PICK = My Selection PICK. 공기업 취준생이 관심 기업(My 픽)을 골라 채용 공고·뉴스·네이버 블로그 합격 후기를 모아 보는 사이트.
 Vite 5 + React 18 + React Router 6 + Tailwind 3 (로컬 Node 18이라 이 버전에 맞춤). 배포: Vercel.
-원격: `uouclaudecode-cpu/ms-gong`. `main`에 푸시하면 Vercel이 다시 배포합니다.
+원격: `uouclaudecode-cpu/ms-gong`(공개 저장소). `main`에 푸시하면 Vercel이 다시 배포합니다.
+주소: https://ms-pick.vercel.app (예전 주소 ms-gong.vercel.app도 같은 사이트. localStorage는 주소마다 따로라 강제 이동은 하지 않음)
 
 ## 구조
 - `api/*.js` Vercel 서버 함수. 외부 API 키는 여기서만 씀(브라우저로 보내지 않음). 결과는 CDN 캐시
@@ -34,11 +35,22 @@ Vite 5 + React 18 + React Router 6 + Tailwind 3 (로컬 Node 18이라 이 버전
 - 예시 데이터는 실제 공고처럼 보이지 않게 "(예시)" 표시를 유지
 - 블로그·뉴스는 제목·요약·링크만 보여 주고 본문을 가져오지 않음
 
-## 실행
-npm run dev / npm run build
+## 실행·점검
+npm run dev / npm run build / npm test (tests/*.test.js, node:test. 규칙을 바꾸면 테스트도 같이)
+GitHub Actions `test.yml`이 main 푸시마다 npm test + build
 
 ## 앱 설치·공유 이미지·통계
 - 홈 화면 설치: `public/manifest.webmanifest`, `public/sw.js`(캐시 안 함, 오프라인 안내만), `src/components/InstallApp.jsx`
 - 아이콘·공유 미리보기(`public/icon-*.png`, `apple-touch-icon.png`, `og.png`)는 `npm run images`(sharp, 맑은 고딕)로 만들고 결과 PNG를 커밋
-- 공유 미리보기 주소는 `index.html`의 `og:url`·`og:image`(현재 `https://ms-gong.vercel.app`). 주소를 바꾸면 같이 바꿈
+- 공유 미리보기 주소는 `index.html`의 `og:url`·`og:image`(현재 `https://ms-pick.vercel.app`). 주소를 바꾸면 같이 바꿈
 - 방문자 통계: `@vercel/analytics` (`src/main.jsx`). Vercel 프로젝트 Analytics 탭에서 켜야 수집됨
+
+## 미리 불러 두기 (스냅숏)
+- `.github/workflows/snapshot.yml`: 매시 7분 진행 중 공고, 매일 04:37(KST) 공고+기관 목록+기업별 트렌드 → `scripts/snapshot.mjs` → 이 저장소의 `data` 브랜치(커밋 하나로 덮어씀)
+- 서버 함수는 `api/_lib/snapshot.js`의 `snapshotOr()`로 raw.githubusercontent의 파일을 먼저 읽고, 없거나 오래되면(공고 3시간·기관 2일·트렌드 3일) 잡알리오 직접 호출
+- 데이터 만드는 코드는 `api/_lib/builders.js` 하나 (서버 함수·스냅숏 공용)
+- 저장소 Secrets에 `DATA_GO_KR_KEY` 필요. 없으면 경고만 남기고 건너뜀
+- `vercel.json`의 `git.deploymentEnabled.data: false`: data 브랜치 푸시로는 배포 안 함
+
+## 화면 오류
+- `src/components/ErrorBoundary.jsx`: 페이지 전체(Layout, 주소 바뀌면 다시 시도) + 섹션별 `<Safe name="뉴스">`. 새 섹션을 만들면 Safe로 감쌈

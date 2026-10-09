@@ -14,6 +14,7 @@ import { useAsync } from '../hooks/useAsync.js';
 import { useJobs } from '../hooks/useJobs.js';
 import { naverNewsSearchUrl } from '../lib/links.js';
 import NotFoundPage from './NotFoundPage.jsx';
+import { Safe } from '../components/ErrorBoundary.jsx';
 
 export default function CompanyPage() {
   const { id } = useParams();
@@ -63,21 +64,31 @@ export default function CompanyPage() {
             </button>
           </div>
         </header>
-        <CompanyInfo company={company} />
+        <Safe name="기관 정보">
+          <CompanyInfo company={company} />
+        </Safe>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="min-w-0 lg:col-span-2">
-          {jobs.loading ? <SkeletonCards count={2} /> : <JobTimeline result={jobs.data} companyIds={[id]} showCompany={false} />}
+          <Safe name="채용 공고">
+            {jobs.loading ? <SkeletonCards count={2} /> : <JobTimeline result={jobs.data} companyIds={[id]} showCompany={false} />}
+          </Safe>
         </div>
         <div className="min-w-0">
-          {news.loading ? <SkeletonCards count={3} className="space-y-3" /> : <NewsList result={news.data} companyIds={[id]} />}
+          <Safe name="뉴스">
+            {news.loading ? <SkeletonCards count={3} className="space-y-3" /> : <NewsList result={news.data} companyIds={[id]} />}
+          </Safe>
         </div>
       </div>
 
-      <HiringTrend company={company} />
+      <Safe name="채용 트렌드">
+        <HiringTrend company={company} />
+      </Safe>
 
-      <BlogPosts company={company} />
+      <Safe name="블로그 후기">
+        <BlogPosts company={company} />
+      </Safe>
     </div>
   );
 }

@@ -18,6 +18,7 @@ import { useJobs } from '../hooks/useJobs.js';
 import { CAREERS, isNewJob, stageOf } from '../lib/apply.js';
 import { byDeadline, formatKoreanDate, getDday, todayKST } from '../lib/dday.js';
 import { jobLink } from '../lib/links.js';
+import { Safe } from '../components/ErrorBoundary.jsx';
 
 function SharedPicksBanner({ ids, onApply, onDismiss }) {
   return (
@@ -109,7 +110,9 @@ export default function HomePage() {
       <div className="space-y-6">
         {banner}
         <Onboarding />
-        <InstallApp />
+        <Safe name="앱 설치 안내">
+          <InstallApp />
+        </Safe>
       </div>
     );
   }
@@ -184,13 +187,17 @@ export default function HomePage() {
 
       <div className="grid gap-8 lg:grid-cols-3 lg:gap-6">
         <div className="min-w-0 lg:col-span-2">
-          {jobsState.loading ? <SkeletonCards count={4} /> : <JobTimeline result={jobsState.data} companyIds={scope} />}
+          <Safe name="채용 공고">
+            {jobsState.loading ? <SkeletonCards count={4} /> : <JobTimeline result={jobsState.data} companyIds={scope} />}
+          </Safe>
         </div>
         <div className="min-w-0">
           {newsState.loading ? (
             <SkeletonCards count={4} className="space-y-3" />
           ) : (
-            <NewsList result={newsState.data} companyIds={scope} limit={6} />
+            <Safe name="뉴스">
+              <NewsList result={newsState.data} companyIds={scope} limit={6} />
+            </Safe>
           )}
         </div>
       </div>
@@ -209,7 +216,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      <InstallApp />
+      <Safe name="앱 설치 안내">
+        <InstallApp />
+      </Safe>
     </div>
   );
 }

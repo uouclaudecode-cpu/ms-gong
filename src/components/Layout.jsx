@@ -1,6 +1,7 @@
-import { Link, NavLink, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { usePicks } from '../context/PickContext.jsx';
 import Logo from './Logo.jsx';
+import ErrorBoundary from './ErrorBoundary.jsx';
 
 // 화면 상단(PC)과 하단 탭바(모바일)에 같은 메뉴를 씁니다
 const NAV = [
@@ -33,6 +34,7 @@ function Badge({ n }) {
 
 export default function Layout() {
   const { picks, saved } = usePicks();
+  const { pathname } = useLocation();
   const counts = { picks: picks.length, saved: saved.length };
 
   return (
@@ -68,7 +70,9 @@ export default function Layout() {
       </header>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-28 pt-6 sm:pb-12">
-        <Outlet />
+        <ErrorBoundary resetKey={pathname} name="이 페이지">
+          <Outlet />
+        </ErrorBoundary>
       </main>
 
       <footer className="hidden border-t border-slate-200 py-8 text-center text-xs text-slate-500 dark:border-slate-800 dark:text-slate-500 sm:block">
