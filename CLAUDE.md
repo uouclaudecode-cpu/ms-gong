@@ -36,7 +36,7 @@ Vite 5 + React 18 + React Router 6 + Tailwind 3 (로컬 Node 18이라 이 버전
 - 블로그·뉴스는 제목·요약·링크만 보여 주고 본문을 가져오지 않음
 
 ## 실행·점검
-npm run dev / npm run build / npm test (tests/*.test.js, node:test. 규칙을 바꾸면 테스트도 같이)
+npm run dev / npm run build / npm test (`node --test`가 tests/*.test.js를 찾음. 폴더 이름을 주면 Node 21+에서 실패. 규칙을 바꾸면 테스트도 같이)
 GitHub Actions `test.yml`이 main 푸시마다 npm test + build
 
 ## 앱 설치·공유 이미지·통계

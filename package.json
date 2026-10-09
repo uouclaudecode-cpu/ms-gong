@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "images": "node scripts/make-images.mjs",
     "company-info": "node scripts/fetch-company-info.mjs",
-    "test": "node --test tests/"
+    "test": "node --test"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
